@@ -51,6 +51,19 @@ class AuthController extends Controller
         ];
     }
 
+    public function registerCaregiver(Request $request){
+        return 'register caregiver';
+    }
+
+    public function registerPartner(Request $request){
+        return 'register caregiver';
+    }
+
+    public function registerVolunteer(Request $request){
+        return 'register caregiver';
+    }
+
+    
     // Login process
     public function login(Request $request){
         
