@@ -24,12 +24,26 @@ class AuthController extends Controller
     }
     
     public function registerMember(Request $request){
+        //Just for documentation
+        $request->validate([
+            'email' => 'required|string|email|unique:users,email',
+            'password' => 'required|string|min:8',
+            'name' => 'required|string|max:255',
+            'gender' => 'required|in:male,female,other',
+            'location' => 'required|string',
+            'phone' => 'required|string|min:10|max:15',
+            'dietary_requirement' => 'required|string',
+            'prefer_meal' => 'required|string',
+        ]);
+
         #Insert user data and get 
         $user = $this->register($request);
         
         $member = new MemberController();
-        // //insert data to member table
+        #Insert data to member table
         $result = $member->store($request, $user);
+        
+        #token generation
         $token = $user->createToken($request->email);
         return [
             'result' => $result,
