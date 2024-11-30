@@ -5,16 +5,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CaregiverController;
+use App\Models\Caregiver;
 
-// Route::get('/user', function (Request $request) {
-//     return $request->user();
-// })->middleware('auth:sanctum');
-    
-Route::apiResource("posts",PostController::class);
 
 #This route is for managing the Member
 Route::apiResource("admin/member",
 MemberController::class);
+
+#This route is for managing the Member
+Route::apiResource("admin/caregiver",
+CaregiverController::class);
+
 
 #This route is for member registeration
 Route::post('/registers/member',

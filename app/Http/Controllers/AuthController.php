@@ -52,7 +52,32 @@ class AuthController extends Controller
     }
 
     public function registerCaregiver(Request $request){
-        return 'register caregiver';
+        //Just for documentation
+        $request->validate([
+            'email' => 'required|string|email|unique:users,email',
+            'password' => 'required|string|min:8',
+            'name' => 'required|string|max:255',
+            'age' => 'required|integer|min:16', // Adjust min age as needed
+            'gender' => 'required|in:male,female,other',
+            'location' => 'required|string',
+            'phone' => 'required|string|min:10|max:15',
+            'experience' => 'required|string',
+            'availability' => 'required|in:part-time,full-time',
+        ]);
+
+        #Insert user data and get 
+        $user = $this->register($request);
+        
+        $caregiver = new CaregiverController();
+        #Insert data to member table
+        $result = $caregiver->store($request, $user);
+        
+        #token generation
+        $token = $user->createToken($request->email);
+        return [
+            'result' => $result,
+            'token' => $token->plainTextToken
+        ];
     }
 
     public function registerPartner(Request $request){
