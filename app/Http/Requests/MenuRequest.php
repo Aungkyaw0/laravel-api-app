@@ -22,13 +22,16 @@ class MenuRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'meal_type' => 'required|string',
+            'description' => 'required|string',
+            'available_date' => 'required|date',
             'menu_items' => 'required|array|min:1',
             'menu_items.*.name' => 'required|string|max:255|distinct',
             'menu_items.*.availability_status' => 'required|in:available,unavailable',
             'menu_items.*.safety_check_status' => 'required|in:passed,pending,failed',
             'menu_items.*.description' => 'nullable|string|max:1000',
             'menu_items.*.dietary_flags' => 'nullable|array',
-            'menu_items.*.dietary_flags.*' => 'string|in:vegetarian,vegan,halal,kosher,gluten-free,dairy-free',
+            'menu_items.*.dietary_flags.*' => 'string|in:vegetarian,vegan,halal,kosher,gluten-free,dairy-free'
         ];
     }
 

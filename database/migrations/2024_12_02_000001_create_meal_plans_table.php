@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('member_id')->constrained()->cascadeOnDelete();
             $table->foreignId('caregiver_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('menu_id')->constrained()->cascadeOnDelete()->after('caregiver_id');
             $table->string('meal_type');
             $table->date('meal_date');
             $table->string('dietary_category')->nullable();

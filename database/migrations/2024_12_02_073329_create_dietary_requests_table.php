@@ -18,12 +18,16 @@ return new class extends Migration
             $table->text('reason');
             $table->text('additional_notes')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->foreignId('caregiver_id')->nullable()->constrained()->after('member_id');
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('dietary_requests');
+        Schema::table('dietary_requests', function (Blueprint $table) {
+            $table->dropForeign(['caregiver_id']);
+            $table->dropColumn('caregiver_id');
+        });    
     }
 };

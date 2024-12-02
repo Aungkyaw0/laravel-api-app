@@ -6,25 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('menus', function (Blueprint $table) {
             $table->id();
             $table->foreignId('caregiver_id')->constrained()->cascadeOnDelete();
+            $table->string('meal_type');
+            $table->string('description');
+            $table->date('available_date');
             $table->json('menu_items');
             $table->enum('status', ['draft', 'published', 'archived'])->default('draft');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('menus');
     }
-}; 
+};

@@ -13,6 +13,9 @@ class Menu extends Model
 
     protected $fillable = [
         'caregiver_id',
+        'meal_type',
+        'description',
+        'available_date',
         'menu_items',
         'status'
     ];

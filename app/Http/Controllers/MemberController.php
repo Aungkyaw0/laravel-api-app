@@ -84,9 +84,7 @@ class MemberController extends Controller implements HasMiddleware
         }
 
         // Fetch meal plans considering member's dietary requirements
-        $mealPlans = MealPlan::where('dietary_category', $member->dietary_requirement)
-            ->orWhere('is_general', true)
-            ->get();
+        $mealPlans = MealPlan::where('member_id', $member->id)->get();
 
         return response()->json([
             'meal_plans' => $mealPlans,

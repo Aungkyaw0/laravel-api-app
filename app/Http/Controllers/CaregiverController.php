@@ -119,7 +119,8 @@ class CaregiverController extends Controller implements HasMiddleware
         if ($request->status === 'approved') {
             $member = Member::findOrFail($dietaryRequest->member_id);
             $member->update([
-                'dietary_requirement' => $dietaryRequest->new_dietary_preferences
+                'dietary_requirement' => $dietaryRequest->requested_dietary_requirement,
+                'prefer_meal' => $dietaryRequest->requested_prefer_meal
             ]);
         }
 
@@ -138,13 +139,23 @@ class CaregiverController extends Controller implements HasMiddleware
             'meal_type' => 'required|string',
             'description' => 'required|string',
             'available_date' => 'required|date',
-            'menu_items' => 'required|json',
-            'nutritional_info' => 'required|json'
+            'menu_items' => 'required|array|min:1'
         ]);
-
+    
         $caregiver = $request->user()->caregivers()->firstOrFail();
-        $menu = $caregiver->menus()->create($fields);
-
+        
+        // Create menu with all required fields
+        $menu = $caregiver->menus()->create([
+            'meal_type' => $fields['meal_type'],
+            'description' => $fields['description'],
+            'available_date' => $fields['available_date'],
+            'menu_items' => json_encode($fields['menu_items']),
+            'status' => 'draft'
+        ]);
+    
+        // Decode JSON string for the response
+        $menu->menu_items = json_decode($menu->menu_items);
+    
         return response()->json([
             'message' => 'Menu created successfully',
             'menu' => $menu
@@ -158,19 +169,30 @@ class CaregiverController extends Controller implements HasMiddleware
     {
         $request->validate([
             'member_id' => 'required|exists:members,id',
-            'meal_type' => 'required|string',
+            'menu_id' => 'required|exists:menus,id',
             'meal_date' => 'required|date',
+            'dietary_category' => 'nullable|string|in:vegetarian,vegan,gluten-free,dairy-free,halal,kosher,regular', // Add validation
         ]);
-
+    
         $caregiver = $request->user()->caregivers()->firstOrFail();
-        
+        $menu = $caregiver->menus()->findOrFail($request->menu_id);
+        $member = Member::findOrFail($request->member_id);
+    
+        // Get dietary category from request or member's dietary requirement
+        $dietaryCategory = $request->dietary_category ?? $member->dietary_requirement;
+    
         $mealPlan = MealPlan::create([
             'member_id' => $request->member_id,
-            'caregiver_id' => $caregiver->id,  // Add this line
-            'meal_type' => $request->meal_type,
+            'caregiver_id' => $caregiver->id,
+            'menu_id' => $menu->id,
+            'meal_type' => $menu->meal_type,
             'meal_date' => $request->meal_date,
-            'status' => 'scheduled'
+            'dietary_category' => $dietaryCategory, // Add this field
+            'status' => 'scheduled',
         ]);
+
+        // Load the related menu data
+        $mealPlan->load('menu');
 
         return response()->json([
             'message' => 'Meal plan published successfully',
