@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+<<<<<<< HEAD
+=======
+use App\Models\Caregiver;
+>>>>>>> bra
 
 class User extends Authenticatable
 {
@@ -21,6 +25,10 @@ class User extends Authenticatable
     protected $fillable = [
         'email',
         'password',
+<<<<<<< HEAD
+=======
+        'role'
+>>>>>>> bra
     ];
 
     /**
@@ -49,4 +57,19 @@ class User extends Authenticatable
     public function members(){
         return $this->hasMany(Member::class);
     }
+<<<<<<< HEAD
+=======
+
+    public function caregivers(){
+        return $this->hasMany(Caregiver::class);
+    }
+
+    public function partners(){
+        return $this->hasMany(Partner::class);
+    }
+
+    public function volunteers(){
+        return $this->hasMany(Volunteer::class);
+    }
+>>>>>>> bra
 }

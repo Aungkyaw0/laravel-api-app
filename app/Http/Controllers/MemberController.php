@@ -4,6 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Member;
 use App\Models\User;
+<<<<<<< HEAD
+=======
+use App\Models\MealPlan;
+use App\Models\DietaryRequest;
+>>>>>>> bra
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -67,4 +72,99 @@ class MemberController extends Controller implements HasMiddleware
     {
         //
     }
+<<<<<<< HEAD
+=======
+
+    /**
+     * Fetch meal plans for a member
+     */
+    public function viewMealPlans(Request $request)
+    {
+        $member = $request->user()->members()->first();
+        
+        if (!$member) {
+            return response()->json([
+                'message' => 'Member not found'
+            ], 404);
+        }
+
+        // Fetch meal plans considering member's dietary requirements
+        $mealPlans = MealPlan::where('member_id', $member->id)->get();
+
+        return response()->json([
+            'meal_plans' => $mealPlans,
+            'current_preferences' => [
+                'dietary_requirement' => $member->dietary_requirement,
+                'prefer_meal' => $member->prefer_meal
+            ]
+        ]);
+    }
+
+    /**
+     * Update member's dietary preferences
+     */
+    public function updatePreferences(Request $request)
+    {
+        $member = $request->user()->members()->first();
+        
+        if (!$member) {
+            return response()->json([
+                'message' => 'Member not found'
+            ], 404);
+        }
+
+        $fields = $request->validate([
+            'dietary_requirement' => 'required|string',
+            'prefer_meal' => 'required|string',
+        ]);
+
+        $member->update($fields);
+
+        return response()->json([
+            'message' => 'Preferences updated successfully',
+            'member' => $member
+        ]);
+    }
+
+    /**
+     * Submit a dietary update request
+     */
+    public function submitDietRequest(Request $request)
+    {
+        $member = $request->user()->members()->first();
+        
+        if (!$member) {
+            return response()->json([
+                'message' => 'Member not found'
+            ], 404);
+        }
+
+        $fields = $request->validate([
+            'reason' => 'required|string',
+            'new_dietary_requirement' => 'required|string',
+            'new_prefer_meal' => 'required|string',
+            'additional_notes' => 'nullable|string'
+        ]);
+
+        // Create dietary request
+        $dietaryRequest = DietaryRequest::create([
+            'member_id' => $member->id,
+            'current_dietary_requirement' => $member->dietary_requirement,
+            'current_prefer_meal' => $member->prefer_meal,
+            'requested_dietary_requirement' => $fields['new_dietary_requirement'],
+            'requested_prefer_meal' => $fields['new_prefer_meal'],
+            'reason' => $fields['reason'],
+            'additional_notes' => $fields['additional_notes'] ?? null,
+            'status' => 'pending'
+        ]);
+
+        // Here you would typically dispatch a notification to caregivers
+        // event(new DietaryRequestSubmitted($dietaryRequest));
+
+        return response()->json([
+            'message' => 'Dietary request submitted successfully',
+            'request' => $dietaryRequest
+        ]);
+    }
+>>>>>>> bra
 }
