@@ -41,3 +41,29 @@ Route::post('/login',
 //Protected route with middleware
 Route::get('/logout', 
 [AuthController::class, 'logout'])->middleware('auth:sanctum');
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/member/meal-plans', [MemberController::class, 'viewMealPlans']);
+    Route::put('/member/preferences', [MemberController::class, 'updatePreferences']);
+    Route::post('/member/diet-request', [MemberController::class, 'submitDietRequest']);
+});
+
+//Caregiver
+// Additional caregiver routes - should be protected with auth:sanctum middleware
+Route::middleware('auth:sanctum')->group(function () {
+    // View assigned members
+    Route::get('/caregiver/members', [CaregiverController::class, 'viewMembers']);
+    
+    // Update member dietary needs
+    Route::put('/caregiver/member/{member}/needs', [CaregiverController::class, 'updateMemberNeeds']);
+    
+    // Manage dietary requests
+    Route::put('/caregiver/dietary-requests/{requestId}', [CaregiverController::class, 'manageDietaryRequests']);
+    
+    // Manage menu
+    Route::post('/caregiver/menu', [CaregiverController::class, 'manageMenu']);
+    
+    // Publish meal plans
+    Route::post('/caregiver/meal-plans', [CaregiverController::class, 'publishMealPlans']);
+});

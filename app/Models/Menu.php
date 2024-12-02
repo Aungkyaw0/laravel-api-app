@@ -7,31 +7,27 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Member extends Model
+class Menu extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
-        'name',
-        'gender',
-        'location',
-        'phone',
-        'dietary_requirement',
-        'prefer_meal',
+        'caregiver_id',
+        'menu_items',
+        'status'
     ];
 
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
+    protected $casts = [
+        'menu_items' => 'array'
+    ];
 
-    public function dietaryRequests(): HasMany
+    public function caregiver(): BelongsTo
     {
-        return $this->hasMany(DietaryRequest::class);
+        return $this->belongsTo(Caregiver::class);
     }
 
     public function mealPlans(): HasMany
     {
         return $this->hasMany(MealPlan::class);
     }
-}
+} 
