@@ -7,6 +7,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CaregiverController;
 use App\Models\Caregiver;
+use App\Http\Controllers\PartnerFoodServiceController;
 
 
 #This route is for managing the Member
@@ -61,9 +62,27 @@ Route::middleware('auth:sanctum')->group(function () {
     // Manage dietary requests
     Route::put('/caregiver/dietary-requests/{requestId}', [CaregiverController::class, 'manageDietaryRequests']);
     
-    // Manage menu
-    Route::post('/caregiver/menu', [CaregiverController::class, 'manageMenu']);
+    //View Avaiable Food Service
+    Route::get('/caregiver/food-services', [CaregiverController::class, 'viewFoodServices']);
+
+    // Create menu
+    Route::post('/caregiver/menus', [CaregiverController::class, 'createMenu']);
     
+    //View Menu which is created by specific caregiver
+    Route::get('/caregiver/menus',[CaregiverController::class, 'viewMenu']);
+
     // Publish meal plans
     Route::post('/caregiver/meal-plans', [CaregiverController::class, 'publishMealPlans']);
 });
+
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    // Food Service Management
+    Route::post('/partner/food-service', [PartnerFoodServiceController::class, 'createFoodService']);
+    Route::get('/partner/food-services/{foodService}/meals', [PartnerFoodServiceController::class, 'getMeals']);
+    Route::post('/partner/food-services/{foodService}/meals', [PartnerFoodServiceController::class, 'addMeal']);
+    Route::put('/partner/food-services/{foodService}/meals/{meal}', [PartnerFoodServiceController::class, 'updateMeal']);
+    Route::put('/partner/food-services/{foodService}/status', [PartnerFoodServiceController::class, 'updateServiceStatus']);
+});
+
+
