@@ -3,68 +3,74 @@
 namespace App\Http\Controllers;
 
 use App\Models\Volunteer;
-use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
+use App\Services\RouteService;
+
 class VolunteerController extends Controller
 {
-    public static function middleware()
+    public function dashboard()
     {
-        return [
-            new Middleware('auth:sanctum', except: ['index', 'show'])
-        ];
-    }
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        return Volunteer::all();
+        $volunteer = auth()->user()->volunteer;
+        $upcomingDeliveries = $volunteer->deliveries()
+            ->where('status', '!=', 'delivered')
+            ->orderBy('pickup_time')
+            ->get();
+
+        return response()->json([
+            'volunteer' => $volunteer,
+            'upcoming_deliveries' => $upcomingDeliveries,
+            'stats' => $this->getVolunteerStats($volunteer)
+        ]);
     }
 
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request, User $user)
+    public function updateAvailability(Request $request)
     {
-        $fields = $request->validate([
-            'name' => 'required|string|max:255',
-            'age' => 'required|integer|min:18', // Adjust min age as needed
-            'gender' => 'required|in:male,female,other',
-            'location' => 'required|string',
-            'phone' => 'required|string|min:10|max:15',
-            'experience' => 'required|string',
-            'availability' => 'required|in:part-time,full-time',
+        $validated = $request->validate([
+            'availabilities' => 'required|array',
+            'availabilities.*.day_of_week' => 'required|string',
+            'availabilities.*.start_time' => 'required|date_format:H:i',
+            'availabilities.*.end_time' => 'required|date_format:H:i|after:start_time'
         ]);
 
-        $post = $user->volunteers()->create($fields);
-        return $post; #return json data
+        $volunteer = auth()->user()->volunteer;
+        $volunteer->availabilities()->delete();
+        $volunteer->availabilities()->createMany($validated['availabilities']);
+
+        return response()->json(['message' => 'Availability updated successfully']);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Volunteer $volunteer)
+    public function acceptDelivery(Request $request, Delivery $delivery)
     {
-        return $volunteer;
+        $volunteer = auth()->user()->volunteer;
+        
+        if ($delivery->status !== 'pending') {
+            return response()->json(['message' => 'Delivery no longer available'], 422);
+        }
+
+        $delivery->update([
+            'volunteer_id' => $volunteer->id,
+            'status' => 'assigned'
+        ]);
+
+        return response()->json(['message' => 'Delivery assigned successfully']);
     }
 
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Volunteer $volunteer)
+    private function getVolunteerStats(Volunteer $volunteer)
     {
-        //
+        return [
+            'total_deliveries' => $volunteer->deliveries()->where('status', 'delivered')->count(),
+            'total_distance' => $volunteer->deliveries()->where('status', 'delivered')->sum('distance'),
+            'on_time_rate' => $this->calculateOnTimeRate($volunteer)
+        ];
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Volunteer $volunteer)
+    private function calculateOnTimeRate(Volunteer $volunteer)
     {
-        //
+        $completed = $volunteer->deliveries()->where('status', 'delivered');
+        $total = $completed->count();
+        if ($total === 0) return 100;
+
+        $onTime = $completed->where('delivery_time', '<=', 'expected_delivery_time')->count();
+        return ($onTime / $total) * 100;
     }
 }

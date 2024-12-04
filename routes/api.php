@@ -1,13 +1,13 @@
 <?php
 
 use App\Http\Controllers\MemberController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CaregiverController;
-use App\Models\Caregiver;
+use App\Http\Controllers\DonationController;
 use App\Http\Controllers\PartnerFoodServiceController;
+use App\Http\Controllers\VolunteerController;
 
 
 #This route is for managing the Member
@@ -85,4 +85,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/partner/food-services/{foodService}/status', [PartnerFoodServiceController::class, 'updateServiceStatus']);
 });
 
+//Donor Routes
+Route::prefix('donations')->group(function () {
+    // Step 1: Initialize donation
+    Route::post('/', [DonationController::class, 'processDonation']);
+    
+    // Step 2: Process payment
+    Route::post('/payment', [DonationController::class, 'processPayment']);
+});
 
+Route::middleware(['auth:sanctum', 'role:volunteer'])->group(function () {
+    Route::get('/volunteer/dashboard', [VolunteerController::class, 'dashboard']);
+    Route::post('/volunteer/availability', [VolunteerController::class, 'updateAvailability']);
+    Route::post('/volunteer/deliveries/{delivery}/accept', [VolunteerController::class, 'acceptDelivery']);
+    Route::post('/volunteer/deliveries/{delivery}/status', [VolunteerController::class, 'updateDeliveryStatus']);
+});
