@@ -2,138 +2,87 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Member;
-use App\Models\User;
-use App\Models\MealPlan;
-use App\Models\DietaryRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Member;
+use App\Models\DietaryRequest;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
-
+use Illuminate\Support\Facades\Log;
 class MemberController extends Controller implements HasMiddleware
 {
-    public static function middleware()
+    public static function middleware(): array
     {
         return [
-            new Middleware('auth:sanctum', except: ['index', 'show'])
+            new Middleware('auth'),
+            new Middleware(function($request, $next) {
+                if (Auth::user()->role !== 'member') {
+                    return redirect('/login')->with('error', 'Unauthorized access.');
+                }
+                return $next($request);
+            })
         ];
     }
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        return Member::all();
-    }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request, User $user)
+    public function dashboard()
     {
-        $fields = $request->validate([
-            'name' => 'required|string|max:255',
-            'gender' => 'required|in:male,female,other',
-            'location' => 'required|string',
-            'phone' => 'required|string|min:10|max:15',
-            'dietary_requirement' => 'required|string',
-            'prefer_meal' => 'required|string',
-        ]);
-        //$post = Member::create($fields);
-        //$post = $request->user()->members()->create($fields);
-        $post = $user->members()->create($fields);
-        return $post; #return json data
-        
-    }
+        try {
+            $member = Auth::user()->member;
+            
+            // Check if member relationship exists
+            if (!$member) {
+                Auth::logout();
+                return redirect('/login')->with('error', 'Member profile not found.');
+            }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Member $member)
-    {
-        return $member;
-    }
+            // Fetch meal plans for the member with error handling
+            $mealPlans = $member->mealPlans()
+                ->with(['caregiver', 'menu'])
+                ->orderBy('meal_date', 'desc')
+                ->get();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Member $member)
-    {
-        //
-    }
+            // Check if relationships are properly loaded
+            $mealPlans = $mealPlans->map(function ($mealPlan) {
+                if (!$mealPlan->caregiver) {
+                    $mealPlan->caregiver = new \App\Models\Caregiver(['name' => 'Unassigned']);
+                }
+                if (!$mealPlan->menu) {
+                    $mealPlan->menu = new \App\Models\Menu(['name' => 'Menu Pending']);
+                }
+                return $mealPlan;
+            });
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Member $member)
-    {
-        //
-    }
-
-    /**
-     * Fetch meal plans for a member
-     */
-    public function viewMealPlans(Request $request)
-    {
-        $member = $request->user()->members()->first();
-        
-        if (!$member) {
-            return response()->json([
-                'message' => 'Member not found'
-            ], 404);
+            return view('dashboard.member', compact('member', 'mealPlans'));
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            Log::error('Member dashboard error: ' . $e->getMessage());
+            
+            // Return to login with error message
+            return redirect('/login')->with('error', 'Unable to load dashboard. Please try again.');
         }
-
-        // Fetch meal plans considering member's dietary requirements
-        $mealPlans = MealPlan::where('member_id', $member->id)->get();
-
-        return response()->json([
-            'meal_plans' => $mealPlans,
-            'current_preferences' => [
-                'dietary_requirement' => $member->dietary_requirement,
-                'prefer_meal' => $member->prefer_meal
-            ]
-        ]);
     }
 
-    /**
-     * Update member's dietary preferences
-     */
     public function updatePreferences(Request $request)
     {
-        $member = $request->user()->members()->first();
-        
-        if (!$member) {
-            return response()->json([
-                'message' => 'Member not found'
-            ], 404);
-        }
-
-        $fields = $request->validate([
-            'dietary_requirement' => 'required|string',
-            'prefer_meal' => 'required|string',
+        $request->validate([
+            'prefer_meal' => 'required|in:hot,frozen,both',
+            'dietary_requirement' => 'required|in:none,vegetarian,vegan,halal,gluten-free'
         ]);
 
-        $member->update($fields);
+        Auth::user()->member->update($request->only(['prefer_meal', 'dietary_requirement']));
 
-        return response()->json([
-            'message' => 'Preferences updated successfully',
-            'member' => $member
-        ]);
+        return back()->with('success', 'Preferences updated successfully!');
     }
 
-    /**
-     * Submit a dietary update request
-     */
-    public function submitDietRequest(Request $request)
+    public function specialRequest(Request $request)
     {
-        $member = $request->user()->members()->first();
-        
+        $member = $request->user()->member;
+
         if (!$member) {
             return response()->json([
                 'message' => 'Member not found'
             ], 404);
         }
-
         $fields = $request->validate([
             'reason' => 'required|string',
             'new_dietary_requirement' => 'required|string',
@@ -153,12 +102,35 @@ class MemberController extends Controller implements HasMiddleware
             'status' => 'pending'
         ]);
 
-        // Here you would typically dispatch a notification to caregivers
-        // event(new DietaryRequestSubmitted($dietaryRequest));
+        // Add logic to handle special meal requests
 
-        return response()->json([
-            'message' => 'Dietary request submitted successfully',
-            'request' => $dietaryRequest
+        return back()->with('success', 'Special meal request submitted successfully!');
+    }
+
+    public function contactSupport(Request $request)
+    {
+        $request->validate([
+            'subject' => 'required|string',
+            'message' => 'required|string'
         ]);
+
+        // Add logic to handle support requests
+
+        return back()->with('success', 'Support request sent successfully!');
+    }
+
+    public function viewMealPlans()
+    {
+        try {
+            $member = Auth::user()->member;
+            $mealPlans = $member->mealPlans()
+                ->with(['caregiver', 'menu'])
+                ->orderBy('meal_date', 'desc')
+                ->get();
+
+            return view('dashboard.member', compact('member', 'mealPlans'));
+        } catch (\Exception $e) {
+            return back()->with('error', 'Unable to fetch meal plans.');
+        }
     }
 }

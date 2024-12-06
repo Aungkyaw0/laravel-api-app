@@ -13,6 +13,7 @@ class Menu extends Model
     use HasFactory;
 
     protected $fillable = [
+        'name',
         'caregiver_id',
         'meal_type',
         'description',

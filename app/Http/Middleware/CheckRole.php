@@ -7,10 +7,11 @@ use Illuminate\Http\Request;
 
 class CheckRole
 {
-    public function handle(Request $request, Closure $next, string $role)
+    public function handle(Request $request, Closure $next, $role)
     {
         if (!$request->user() || $request->user()->role !== $role) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return redirect()->route('login')
+                ->with('error', 'Unauthorized access. Please login with correct credentials.');
         }
 
         return $next($request);

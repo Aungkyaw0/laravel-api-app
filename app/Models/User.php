@@ -63,4 +63,33 @@ class User extends Authenticatable
     public function volunteers(){
         return $this->hasMany(Volunteer::class);
     }
+
+    public function member()
+    {
+        return $this->hasOne(Member::class);
+    }
+
+    public function caregiver()
+    {
+        return $this->hasOne(Caregiver::class);
+    }
+
+    public function partner()
+    {
+        return $this->hasOne(Partner::class);
+    }
+
+    public function volunteer()
+    {
+        return $this->hasOne(Volunteer::class);
+    }
+
+    public function getRoleAttribute()
+    {
+        if ($this->partner()->exists()) return 'partner';
+        if ($this->caregiver()->exists()) return 'caregiver';
+        if ($this->member()->exists()) return 'member';
+        if ($this->volunteer()->exists()) return 'volunteer';
+        return 'user';
+    }
 }

@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('menus', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
             $table->foreignId('caregiver_id')->constrained()->cascadeOnDelete();
             $table->string('meal_type');
             $table->string('description');

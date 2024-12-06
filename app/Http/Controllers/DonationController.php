@@ -2,16 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Donation;
-use App\Mail\DonationThankYou;
 use Illuminate\Http\Request;
+use App\Models\Donation;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Facade;
-use Illuminate\Support\Facades\Log;
-use Symfony\Component\Mailer\Exception\TransportException;
+use App\Mail\DonationThankYou;
+
 class DonationController extends Controller
 {
-
     public function processDonation(Request $request)
     {
         $validated = $request->validate([
@@ -37,7 +34,6 @@ class DonationController extends Controller
         ]);
     }
 
-
     public function processPayment(Request $request)
     {
         $validated = $request->validate([
@@ -46,84 +42,40 @@ class DonationController extends Controller
             'payment_details.method' => 'required|in:credit_card,paypal'
         ]);
 
-        if ($validated['payment_details']['method'] === 'credit_card') {
+        $donation = Donation::findOrFail($request->donation_id);
+
+        // Process payment based on method
+        if ($request->payment_details['method'] === 'credit_card') {
+            // Validate credit card details
             $request->validate([
                 'payment_details.card_number' => 'required|string|size:16',
                 'payment_details.expiry_date' => 'required|string',
                 'payment_details.cvv' => 'required|string|size:3',
             ]);
-        } else { // PayPal
+        } else {
+            // Validate PayPal details
             $request->validate([
                 'payment_details.paypal_email' => 'required|email',
             ]);
         }
 
-        // Simulate payment processing delay
-        sleep(rand(1, 2));
+        // Simulate payment processing
+        $paymentId = 'PAY-' . strtoupper(uniqid());
+        
+        $donation->update([
+            'payment_status' => 'completed',
+            'payment_id' => $paymentId
+        ]);
 
-        // Simulate success rate (90% success)
-        $isSuccessful = (rand(1, 100) <= 90);
-
-        $donation = Donation::findOrFail($validated['donation_id']);
-
-        if ($isSuccessful) {
-            $paymentId = $this->generatePaymentId($donation);
-            
-            $donation->update([
-                'payment_status' => 'completed',
-                'payment_id' => $paymentId
-            ]);
-            $resultEmailSend = $this->sendThankYouEmail($donation);
-            return response()->json([
-                'success' => true,
-                'message' => 'Payment processed successfully',
-                'payment_id' => $paymentId,
-                'transaction_date' => now(),
-                'amount' => $donation->amount,
-                'email_sent' => $resultEmailSend
-            ]);
-        }
-
-        $donation->update(['payment_status' => 'failed']);
+        // Send thank you email
+        Mail::to($donation->email)->send(new DonationThankYou($donation));
 
         return response()->json([
-            'success' => false,
-            'message' => 'Payment could not be processed. Please try again.',
-            'error_code' => 'PAYMENT_FAILED_' . rand(1000, 9999)
-        ], 422);
-    }
-
-    private function generatePaymentId($donation)
-    {
-        // Generate a realistic-looking payment ID
-        $prefix = $donation->payment_method === 'credit_card' ? 'CC' : 'PP';
-        $timestamp = now()->format('YmdHis');
-        $random = strtoupper(substr(uniqid(), -4));
-        
-        return "{$prefix}-{$timestamp}-{$random}";
-    }
-
-    private function sendThankYouEmail(Donation $donation)
-    {
-        try {
-            // Add timeout to quickly catch connection issues
-            config(['mail.mailers.smtp.timeout' => 5]);
-            
-            Mail::to($donation->email)->send(new DonationThankYou($donation));
-            
-            Log::info('Thank you email sent successfully to donor', [
-                'donation_id' => $donation->id,
-                'email' => $donation->email
-            ]);
-            
-            return true;
-        } catch (TransportException $e) {
-            Log::error('SMTP Connection Error', [
-                'donation_id' => $donation->id,
-                'email' => $donation->email,
-                'error' => $e->getMessage()
-            ]);
-            return false;
-        }
+            'success' => true,
+            'message' => 'Payment processed successfully',
+            'payment_id' => $paymentId,
+            'transaction_date' => now(),
+            'amount' => $donation->amount
+        ]);
     }
 } 

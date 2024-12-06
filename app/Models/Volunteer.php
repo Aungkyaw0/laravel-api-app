@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Volunteer extends Model
 {
-    protected $fillable = [
+    protected $fillable = ['name',
         'user_id', 'phone', 'address', 'emergency_contact', 
         'emergency_phone', 'has_vehicle', 'vehicle_type',
         'license_number', 'background_check_passed', 'status'

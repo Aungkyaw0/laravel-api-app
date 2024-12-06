@@ -15,7 +15,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
-
+use App\Services\DeliveryService;
+use App\Services\RouteService;
+use App\Services\MealTypeService;   
+use Illuminate\Support\Facades\Log;
 class CaregiverController extends Controller implements HasMiddleware
 {
     public static function middleware()
@@ -115,25 +118,27 @@ class CaregiverController extends Controller implements HasMiddleware
         ]);
 
         $dietaryRequest = DietaryRequest::findOrFail($requestId);
-        $caregiver = $request->user()->caregivers()->firstOrFail();
+        $caregiver = $request->user()->caregiver;
 
         $dietaryRequest->update([
             'status' => $request->status,
             'caregiver_id' => $caregiver->id
         ]);
 
+        // If approved, update member's dietary preferences
         if ($request->status === 'approved') {
             $member = Member::findOrFail($dietaryRequest->member_id);
             $member->update([
                 'dietary_requirement' => $dietaryRequest->requested_dietary_requirement,
                 'prefer_meal' => $dietaryRequest->requested_prefer_meal
             ]);
+            
+            $message = 'Dietary request approved successfully. Member preferences have been updated.';
+        } else {
+            $message = 'Dietary request rejected successfully.';
         }
 
-        return response()->json([
-            'message' => "Dietary request {$request->status}",
-            'request' => $dietaryRequest
-        ]);
+        return redirect()->route('caregiver.dashboard')->with('success', $message);
     }
 
     ///
@@ -154,7 +159,8 @@ class CaregiverController extends Controller implements HasMiddleware
      */
     public function createMenu(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
+            'name' => 'required|string',
             'food_service_id' => 'required|exists:food_services,id',
             'meal_ids' => 'required|array',
             'meal_ids.*' => 'exists:meals,id',
@@ -162,28 +168,21 @@ class CaregiverController extends Controller implements HasMiddleware
             'available_date' => 'required|date|after:today',
             'description' => 'required|string'
         ]);
-    
-        $caregiver = $request->user()->caregivers()->firstOrFail();
+
+        $caregiver = $request->user()->caregiver;
         $foodService = FoodService::findOrFail($request->food_service_id);
-        
-        // Verify all meals belong to the food service
         $meals = $foodService->meals()
             ->whereIn('id', $request->meal_ids)
             ->where('is_available', true)
             ->get();
-    
-        if ($meals->count() !== count($request->meal_ids)) {
-            return response()->json([
-                'message' => 'Invalid meal selection'
-            ], 422);
-        }
-    
-        $menu = DB::transaction(function() use ($caregiver, $request, $meals) {
+        try {
+            // Create the menu
             $menu = Menu::create([
+                'name' => $validated['name'],
                 'caregiver_id' => $caregiver->id,
-                'meal_type' => $request->meal_type,
-                'description' => $request->description,
-                'available_date' => $request->available_date,
+                'meal_type' => $validated['meal_type'],
+                'description' => $validated['description'],
+                'available_date' => $validated['available_date'],
                 'menu_items' => $meals->map(function($meal) {
                     return [
                         'meal_id' => $meal->id,
@@ -195,17 +194,21 @@ class CaregiverController extends Controller implements HasMiddleware
                 })->toArray(),
                 'status' => 'draft'
             ]);
-    
-            // Create relationship between menu and meals
-            $menu->meals()->attach($meals->pluck('id'));
-    
-            return $menu;
-        });
-    
-        return response()->json([
-            'message' => 'Menu created successfully',
-            'menu' => $menu->load('meals')
-        ]);
+
+            // Attach the selected meals to the menu
+            $menu->meals()->attach($validated['meal_ids']);
+
+            // Redirect with success message
+            return redirect()
+                ->route('caregiver.dashboard')
+                ->with('success', 'Menu created successfully!');
+                
+        } catch (\Exception $e) {
+            // Redirect with error message
+            return redirect()
+                ->route('caregiver.dashboard')
+                ->with('error', 'Failed to create menu. Please try again.');
+        }
     }
 
     /**
@@ -230,40 +233,99 @@ class CaregiverController extends Controller implements HasMiddleware
             'member_id' => 'required|exists:members,id',
             'menu_id' => 'required|exists:menus,id',
             'meal_date' => 'required|date|after:today',
-            'dietary_category' => 'nullable|string|in:vegetarian,vegan,gluten-free,dairy-free,halal,kosher,regular',
         ]);
 
-        $caregiver = $request->user()->caregivers()->firstOrFail();
-        
-        // Verify menu belongs to caregiver
-        $menu = $caregiver->menus()->findOrFail($request->menu_id);
-        $member = Member::findOrFail($request->member_id);
+        try {
+            $member = Member::findOrFail($request->member_id);
+            $menu = Menu::findOrFail($request->menu_id);
+            $caregiver = Auth::user()->caregiver;
 
-        // Check if menu items match member's dietary requirements
-        $memberDietaryRequirement = $request->dietary_category ?? $member->dietary_requirement;
-        
-        // Verify menu items are suitable for member's dietary requirements
-        // foreach ($menu->menu_items as $item) {
-        //     if (!in_array($memberDietaryRequirement, $item['dietary_flags'])) {
-        //         return response()->json([
-        //             'message' => 'Menu contains items not suitable for member\'s dietary requirements'
-        //         ], 422);
-        //     }
-        // }
+            // Create the meal plan
+            $mealPlan = MealPlan::create([
+                'member_id' => $member->id,
+                'caregiver_id' => $caregiver->id,
+                'menu_id' => $menu->id,
+                'meal_type' => $menu->meal_type,
+                'meal_date' => $request->meal_date,
+                'is_general' => true,
+                'dietary_category' => $member->dietary_requirement,
+                'status' => 'scheduled'
+            ]);
 
-        $mealPlan = MealPlan::create([
-            'member_id' => $member->id,
-            'caregiver_id' => $caregiver->id,
-            'menu_id' => $menu->id,
-            'meal_type' => $menu->meal_type,
-            'meal_date' => $request->meal_date,
-            'dietary_category' => $memberDietaryRequirement,
-            'status' => 'scheduled'
-        ]);
+            $menu->update([
+                'status' => 'published'
+            ]);
+
+            // Create delivery task
+            $deliveryService = new DeliveryService(new RouteService());
+            $delivery = $deliveryService->createDeliveryFromMealPlan($mealPlan);
+
+            return redirect()
+                ->route('caregiver.dashboard')
+                ->with('success', 'Meal plan assigned successfully to ' . $member->name);
+
+        } catch (\Exception $e) {
+            Log::error('Meal Plan Creation Error: ' . $e->getMessage());
+            return redirect()
+                ->route('caregiver.dashboard')
+                ->with('error', 'Failed to assign meal plan. Please try again.');
+        }
+    }
+
+    /**
+     * View pending dietary requests
+     */
+    public function viewPendingDietaryRequests()
+    {
+        $pendingRequests = DietaryRequest::with('member')
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return response()->json([
-            'message' => 'Meal plan published successfully',
-            'meal_plan' => $mealPlan->load(['menu', 'member'])
+            'pending_requests' => $pendingRequests
         ]);
+    }
+
+    public function dashboard()
+    {
+        try {
+            $caregiver = Auth::user()->caregiver;
+            
+            $members = Member::all();
+            $foodServices = FoodService::with(['meals' => function($query) {
+                $query->where('is_available', 1);
+            }])->where('status', 'active')->get();
+
+            $activeMenus = Menu::where('caregiver_id', $caregiver->id)
+                ->where('status', 'published')
+                ->count();
+
+            $draftMenus = Menu::where('caregiver_id', $caregiver->id)
+                ->where('status', 'draft')
+                ->count();
+
+            $menus = Menu::where('caregiver_id', $caregiver->id)
+                ->orderBy('available_date', 'desc')
+                ->take(5)
+                ->get();
+
+            // Add this line to fetch pending dietary requests
+            $pendingRequests = DietaryRequest::with('member')
+                ->where('status', 'pending')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return view('dashboard.caregiver', compact('members', 'foodServices', 'activeMenus', 'draftMenus', 'menus', 'pendingRequests'));
+        } catch (\Exception $e) {
+            return redirect('/login')->with('error', 'Unable to access caregiver dashboard.');
+        }
+    }
+
+    public function viewMeals(FoodService $service)
+    {
+        $meals = $service->meals()->get();
+
+        return view('dashboard.caregiver.view-meals', compact('service', 'meals'));
     }
 }

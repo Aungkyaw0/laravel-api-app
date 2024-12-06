@@ -1,5 +1,8 @@
 <?php
 
+ini_set('max_execution_time', 300); // 5 minutes
+ini_set('memory_limit', '256M');
+
 use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));

@@ -31,6 +31,11 @@ class MealPlan extends Model
         return $this->belongsTo(Member::class);
     }
 
+    public function caregiver(): BelongsTo
+    {
+        return $this->belongsTo(Caregiver::class);
+    }
+    
     public function menu(): BelongsTo
     {
         return $this->belongsTo(Menu::class);

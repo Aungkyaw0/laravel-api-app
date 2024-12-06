@@ -7,17 +7,23 @@ use App\Models\Volunteer;
 
 class RouteService
 {
+    const MAX_HOT_MEAL_DISTANCE = 10; // 10 kilometers threshold
+
     public function calculateRoute(Delivery $delivery)
     {
-        // Here you would integrate with a mapping service like Google Maps
-        // For now, we'll use a simple distance calculation
+        $distance = $this->calculateDistance(
+            $delivery->pickup_address,
+            $delivery->delivery_address
+        );
+
+        // Determine meal type based on distance
+        $recommendedMealType = $distance <= self::MAX_HOT_MEAL_DISTANCE ? 'hot' : 'frozen';
+
         return [
-            'distance' => $this->calculateDistance(
-                $delivery->pickup_address,
-                $delivery->delivery_address
-            ),
-            'estimated_duration' => 30, // minutes
-            'route_points' => []
+            'distance' => $distance,
+            'estimated_duration' => $this->estimateDuration($distance),
+            'recommended_meal_type' => $recommendedMealType,
+            'is_within_hot_meal_range' => $distance <= self::MAX_HOT_MEAL_DISTANCE
         ];
     }
 
@@ -48,10 +54,62 @@ class RouteService
             ->exists();
     }
 
-    private function calculateDistance($from, $to)
+    public function calculateDistance($from, $to)
     {
-        // Implement actual distance calculation
-        // For now, return dummy value
-        return rand(1, 15);
+        // Simplified distance calculation for demonstration
+        // This simulates a basic point-to-point distance calculation
+        
+        // Convert addresses to coordinates (simplified for demo)
+        $fromCoords = $this->mockGeocoding($from);
+        $toCoords = $this->mockGeocoding($to);
+        
+        // Calculate distance using Haversine formula
+        return $this->haversineDistance(
+            $fromCoords['lat'], 
+            $fromCoords['lng'],
+            $toCoords['lat'], 
+            $toCoords['lng']
+        );
     }
+
+    private function mockGeocoding($address)
+    {
+        // Mock geocoding by generating coordinates within a reasonable area
+        // For demonstration, using KL coordinates as center point
+        $klLat = 3.1390;  // Kuala Lumpur latitude
+        $klLng = 101.6869; // Kuala Lumpur longitude
+        
+        // Generate random coordinates within roughly 20km of KL
+        return [
+            'lat' => $klLat + (rand(-15, 15) / 100),
+            'lng' => $klLng + (rand(-15, 15) / 100)
+        ];
+    }
+
+    private function haversineDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        // Earth's radius in kilometers
+        $r = 6371;
+        
+        $lat1 = deg2rad($lat1);
+        $lon1 = deg2rad($lon1);
+        $lat2 = deg2rad($lat2);
+        $lon2 = deg2rad($lon2);
+        
+        $dlon = $lon2 - $lon1;
+        $dlat = $lat2 - $lat1;
+        
+        $a = sin($dlat/2)**2 + cos($lat1) * cos($lat2) * sin($dlon/2)**2;
+        $c = 2 * asin(sqrt($a));
+        
+        return $r * $c; // Distance in kilometers
+    }
+
+    private function estimateDuration($distance)
+    {
+        // Rough estimate: 2 minutes per kilometer plus 10 minutes buffer
+        return ceil($distance * 2) + 10;
+    }
+
+
 } 
