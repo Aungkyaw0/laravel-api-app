@@ -9,6 +9,9 @@ use App\Models\DietaryRequest;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Log;
+use App\Models\MealPlan;
+use App\Models\Order;
+
 class MemberController extends Controller implements HasMiddleware
 {
     public static function middleware(): array
@@ -26,40 +29,11 @@ class MemberController extends Controller implements HasMiddleware
 
     public function dashboard()
     {
-        try {
-            $member = Auth::user()->member;
-            
-            // Check if member relationship exists
-            if (!$member) {
-                Auth::logout();
-                return redirect('/login')->with('error', 'Member profile not found.');
-            }
+        $mealPlans = MealPlan::where('member_id', Auth::user()->member->id)
+                             ->where('status', 'scheduled')
+                             ->get();
 
-            // Fetch meal plans for the member with error handling
-            $mealPlans = $member->mealPlans()
-                ->with(['caregiver', 'menu'])
-                ->orderBy('meal_date', 'desc')
-                ->get();
-
-            // Check if relationships are properly loaded
-            $mealPlans = $mealPlans->map(function ($mealPlan) {
-                if (!$mealPlan->caregiver) {
-                    $mealPlan->caregiver = new \App\Models\Caregiver(['name' => 'Unassigned']);
-                }
-                if (!$mealPlan->menu) {
-                    $mealPlan->menu = new \App\Models\Menu(['name' => 'Menu Pending']);
-                }
-                return $mealPlan;
-            });
-
-            return view('dashboard.member', compact('member', 'mealPlans'));
-        } catch (\Exception $e) {
-            // Log the error for debugging
-            Log::error('Member dashboard error: ' . $e->getMessage());
-            
-            // Return to login with error message
-            return redirect('/login')->with('error', 'Unable to load dashboard. Please try again.');
-        }
+        return view('dashboard.member', compact('mealPlans'));
     }
 
     public function updatePreferences(Request $request)
@@ -131,6 +105,68 @@ class MemberController extends Controller implements HasMiddleware
             return view('dashboard.member', compact('member', 'mealPlans'));
         } catch (\Exception $e) {
             return back()->with('error', 'Unable to fetch meal plans.');
+        }
+    }
+
+    public function createOrder(Request $request)
+    {
+        try {
+            // Validate request
+            $request->validate([
+                'meal_plan_id' => 'required|exists:meal_plans,id'
+            ]);
+
+            // Get the meal plan
+            $mealPlan = MealPlan::with(['caregiver','partner'])->findOrFail($request->meal_plan_id);
+            
+            // Check if order already exists
+            $existingOrder = Order::where('meal_plan_id',$mealPlan->id)
+                ->where('member_id', Auth::user()->member->id)
+                ->first();
+
+            if ($existingOrder) {
+                return back()->with('error', 'An order already exists for this mealplan.');
+            }
+
+            // Create new order
+            $order = Order::create([
+                'member_id' => $mealPlan->member_id,
+                'caregiver_id' => $mealPlan->caregiver_id,
+                'partner_id' => $mealPlan->partner_id,
+                'meal_plan_id' => $mealPlan->id,
+                'delivery_status' => 'pending',
+                'delivery_meal_type' => $mealPlan->deliver_meal_type
+            ]);
+
+            return back()->with('success', 'Order requested successfully!');
+        } catch (\Exception $e) {
+            Log::error('Order creation error: ' . $e->getMessage());
+            return back()->with('error', 'Unable to create order. Please tryagain.');
+        }
+    }
+
+    public function confirmDelivery(Request $request, Order $order)
+    {
+        try {
+            // Validate request
+            $request->validate([
+                'confirmation_code' => 'required|string'
+            ]);
+
+            // Check if the order belongs to the authenticated user
+            if ($order->member_id !== Auth::user()->member->id) {
+                return back()->with('error', 'Unauthorized action.');
+            }
+
+            // Update the delivery confirmation code
+            $order->update([
+                'delivery_confirmation_code' => $request->confirmation_code
+            ]);
+
+            return back()->with('success', 'Delivery confirmed successfully!');
+        } catch (\Exception $e) {
+            Log::error('Delivery confirmation error: ' . $e->getMessage());
+            return back()->with('error', 'Unable to confirm delivery. Please try again.');
         }
     }
 }

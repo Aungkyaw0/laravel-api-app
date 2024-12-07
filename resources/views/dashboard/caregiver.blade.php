@@ -306,6 +306,14 @@
             </div>
         </div>
     @endif
+    @if(session('error'))
+        <div class="container">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    @endif
 
     <div class="container">
         <!-- Quick Stats -->
@@ -375,6 +383,7 @@
             </div>
 
             <!-- Right Column - Food Services -->
+            <!--
             <div class="col-lg-6">
                 <div class="action-card">
                     <h2 class="h4 mb-4">Food Services</h2>
@@ -413,7 +422,7 @@
                 </div>
 
                 
-            </div>
+            </div> -->
         </div>
         <!-- Current Menus -->
         <div class="row mb-4">
@@ -424,7 +433,7 @@
                     {{ $draftMenus ?? 0 }} Draft
                 </span>
             </div>
-            @forelse($menus ?? [] as $menu)
+            @forelse($menus->where('status', 'draft') as $menu)            
             <div class="meal-card">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>

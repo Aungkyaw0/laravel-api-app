@@ -43,6 +43,9 @@ Route::prefix('member')->group(function () {
         Route::post('/special-request', [MemberController::class, 'specialRequest'])->name('member.special-request');
         Route::post('/contact-support', [MemberController::class, 'contactSupport'])->name('member.contact-support');
         Route::get('/meal-plans', [MemberController::class, 'viewMealPlans'])->name('member.meal-plans');
+        Route::post('/create-order', [MemberController::class, 'createOrder'])->name('member.create-order');
+        Route::post('/orders/{order}/confirm-delivery', [MemberController::class, 'confirmDelivery'])
+            ->name('member.confirm-delivery');
     });
 
 // Caregiver Routes
@@ -72,6 +75,7 @@ Route::prefix('partner')->group(function () {
     Route::put('/food-services/{foodService}/meals/{meal}', [PartnerController::class, 'updateMeal'])->name('partner.food-service.update-meal');
     Route::put('/food-services/{foodService}/status', [PartnerController::class, 'updateServiceStatus'])->name('partner.food-service.update-status');
     Route::post('/profile/update', [PartnerController::class, 'updateProfile'])->name('partner.profile.update');
+    Route::post('/orders/{order}/accept', [PartnerController::class, 'acceptOrder'])->name('partner.accept-order');
 });
 
 // Volunteer Routes
@@ -79,7 +83,11 @@ Route::prefix('volunteer')->group(function () {
     Route::get('/dashboard', [VolunteerController::class, 'dashboard'])->name('volunteer.dashboard');
     Route::post('/availability', [VolunteerController::class, 'updateAvailability'])->name('volunteer.update-availability');
     Route::post('/deliveries/{delivery}/accept', [VolunteerController::class, 'acceptDelivery'])->name('volunteer.accept-delivery');
+    Route::post('/deliveries/{delivery}/reject', [VolunteerController::class, 'rejectDelivery'])->name('volunteer.reject-delivery');
     Route::post('/deliveries/{delivery}/status', [VolunteerController::class, 'updateDeliveryStatus'])->name('volunteer.update-delivery-status');
+    Route::get('/deliveries/{delivery}/route', [VolunteerController::class, 'getDeliveryRoute'])->name('volunteer.delivery-route');
+    Route::post('/deliveries/{delivery}/complete', [VolunteerController::class, 'completeDelivery'])->name('volunteer.complete-delivery');
+    Route::post('/orders/{order}/accept', [VolunteerController::class, 'acceptOrder'])->name('volunteer.accept-order');
 });
 
 

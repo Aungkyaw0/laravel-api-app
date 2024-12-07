@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('location');
             $table->string('business_type');
             $table->string('service_offer');
+            $table->decimal('latitude', 10, 8)->nullable();  // Add this for latitude
+            $table->decimal('longitude', 11, 8)->nullable(); // Add this for longitude
             $table->timestamps();
         });
     }

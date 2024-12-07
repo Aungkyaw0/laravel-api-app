@@ -100,7 +100,7 @@
     <section class="contact-hero">
         <div class="container">
             <div class="row justify-content-center text-center">
-                <div class="col-md-8">
+                <div class="col-md-8 pt-5">
                     <h1 class="mb-4 mt-4 pt-2">Get in Touch</h1>
                     <p class="lead">Have questions? We're here to help and would love to hear from you.</p>
                 </div>
@@ -203,7 +203,7 @@
                             </li>
                             <li>
                                 <span>Sunday</span>
-                                <span>Closed</span>
+                                <span>9:00 AM - 1:00 PM</span>
                             </li>
                         </ul>
                         <div class="text-center mt-4">

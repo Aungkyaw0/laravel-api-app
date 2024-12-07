@@ -36,7 +36,10 @@ class AuthController extends Controller
                 'phone' => 'required|string|min:10',
                 'address' => 'required|string',
                 'dietary_requirement' => 'required|string|in:none,vegetarian,vegan,halal,gluten-free',
-                'prefer_meal' => 'required|string|in:hot,frozen,both'
+                'prefer_meal' => 'required|string|in:hot,frozen,both',
+                'latitude' => 'nullable|numeric|between:-90,90',
+                'longitude' => 'nullable|numeric|between:-180,180'
+     
             ], [
                 'email.unique' => 'This email is already registered',
                 'password.min' => 'Password must be at least 8 characters',
@@ -70,7 +73,9 @@ class AuthController extends Controller
                 'phone' => $request->phone,
                 'address' => $request->address,
                 'dietary_requirement' => $request->dietary_requirement,
-                'prefer_meal' => $request->prefer_meal
+                'prefer_meal' => $request->prefer_meal,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude
             ]);
 
             DB::commit();
@@ -165,7 +170,9 @@ class AuthController extends Controller
                 'phone' => 'required|string',
                 'location' => 'required|string',
                 'business_type' => 'required|string',
-                'service_offer' => 'required|string'
+                'service_offer' => 'required|string',
+                'latitude' => 'nullable|numeric|between:-90,90',
+                'longitude' => 'nullable|numeric|between:-180,180'
             ]);
 
             if ($validator->fails()) {
@@ -192,7 +199,9 @@ class AuthController extends Controller
                 'phone' => $request->phone,
                 'location' => $request->location,
                 'business_type' => $request->business_type,
-                'service_offer' => $request->service_offer
+                'service_offer' => $request->service_offer,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude
             ]);
 
             DB::commit();
@@ -299,6 +308,8 @@ class AuthController extends Controller
                 switch ($user->role) {
                     case 'member':
                         return redirect()->route('member.dashboard');
+                    case 'admin':
+                        return redirect()->route('admin.dashboard');
                     case 'caregiver':
                         return redirect()->route('caregiver.dashboard');
                     case 'volunteer':

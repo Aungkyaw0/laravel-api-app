@@ -5,12 +5,12 @@
 @section('styles')
 <style>
     .register-hero {
-        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('{{ asset("images/register-hero.jpg") }}');
+        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('{{ asset("img/register-hero.png") }}');
         background-size: cover;
         background-position: center;
         padding: 100px 0;
         color: white;
-        margin-top: -60px;
+        
     }
 
     .user-type-card {
@@ -151,7 +151,7 @@
     <section class="register-hero">
         <div class="container">
             <div class="row justify-content-center text-center">
-                <div class="col-md-8">
+                <div class="col-md-8 pt-5">
                     <h1 class="mb-4">Join Our Community</h1>
                     <p class="lead">Choose your role and become part of our mission to serve the community</p>
                 </div>
@@ -200,6 +200,7 @@
             </div>
 
             <!-- Registration Forms -->
+            {{-- Member Registeration --}}
             <div id="memberForm" class="registration-form">
                 <h2 class="text-center mb-4">Member Registration</h2>
                 <form action="{{ route('registers.member') }}" method="POST">
@@ -241,6 +242,29 @@
                     </div>
                     <div class="mb-3">
                         <input type="text" class="form-control" name="address" placeholder="Full Address" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12 mb-2">
+                            <button type="button" class="btn btn-secondary w-100" onclick="getGeolocation()">
+                                <i class="fas fa-map-marker-alt"></i> Get My Location
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="latitude">Latitude</label>
+                                <input type="number" class="form-control" name="latitude" id="latitude" 
+                                       step="any" placeholder="Latitude" min="-90" max="90">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="longitude">Longitude</label>
+                                <input type="number" class="form-control" name="longitude" id="longitude" 
+                                       step="any" placeholder="Longitude" min="-180" max="180">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
@@ -365,6 +389,31 @@
                             <input type="text" class="form-control" name="location" placeholder="Location" required>
                         </div>
                     </div>
+                    {{-- Geo --}}
+                    <div class="row mb-3">
+                        <div class="col-12 mb-2">
+                            <button type="button" class="btn btn-secondary w-100" onclick="getGeolocation()">
+                                <i class="fas fa-map-marker-alt"></i> Get My Location
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="latitude">Latitude</label>
+                                <input type="number" class="form-control" name="latitude" id="latitude" 
+                                       step="any" placeholder="Latitude" min="-90" max="90">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="longitude">Longitude</label>
+                                <input type="number" class="form-control" name="longitude" id="longitude" 
+                                       step="any" placeholder="Longitude" min="-180" max="180">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- Bs --}}
                     <div class="row">
                         <div class="col-md-6">
                             <select class="form-control" name="business_type" required>
@@ -791,5 +840,65 @@ document.getElementById('hasVehicle').addEventListener('change', function() {
         document.querySelector('input[name="license_number"]').value = '';
     }
 });
+
+// Add this function inside the existing scripts section
+function getGeolocation() {
+    if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser');
+        return;
+    }
+
+    // Find the active form's location button and inputs
+    const activeForm = document.querySelector('.registration-form[style*="display: block"]');
+    const locationButton = activeForm.querySelector('button[onclick="getGeolocation()"]');
+    const latitudeInput = activeForm.querySelector('#latitude');
+    const longitudeInput = activeForm.querySelector('#longitude');
+
+    const originalText = locationButton.innerHTML;
+    locationButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Getting Location...';
+    locationButton.disabled = true;
+
+    navigator.geolocation.getCurrentPosition(
+        // Success callback
+        (position) => {
+            latitudeInput.value = position.coords.latitude;
+            longitudeInput.value = position.coords.longitude;
+            
+            // Reset button
+            locationButton.innerHTML = originalText;
+            locationButton.disabled = false;
+            
+            // Add visual feedback
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.className = 'alert alert-success alert-dismissible fade show mt-2';
+            feedbackDiv.innerHTML = `
+                Location successfully obtained!
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            locationButton.parentNode.appendChild(feedbackDiv);
+        },
+        // Error callback
+        (error) => {
+            let errorMessage;
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = "Location access was denied. Please enable location access in your browser settings.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = "Location information is unavailable.";
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = "The request to get user location timed out.";
+                    break;
+                default:
+                    errorMessage = "An unknown error occurred.";
+                    break;
+            }
+            alert(errorMessage);
+            locationButton.innerHTML = originalText;
+            locationButton.disabled = false;
+        }
+    );
+}
 </script>
 @endsection 

@@ -19,12 +19,13 @@ return new class extends Migration
             $table->boolean('has_vehicle')->default(false);
             $table->string('vehicle_type')->nullable();
             $table->string('license_number')->nullable();
+            $table->string('status')->default('unavailable');
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('volunteers');
+        Schema::dropIfExists(table: 'volunteers');
     }
 }; 

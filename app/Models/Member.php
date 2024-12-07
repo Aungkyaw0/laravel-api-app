@@ -14,13 +14,12 @@ class Member extends Model
     protected $fillable = [
         'name',
         'gender',
-        'location',
         'phone',
+        'address',
         'dietary_requirement',
         'prefer_meal',
-        'address',
-        'preferred_kitchen_id',
-        'is_within_delivery_range'
+        'latitude',
+        'longitude'
     ];
 
     protected $casts = [
@@ -40,6 +39,11 @@ class Member extends Model
     public function mealPlans(): HasMany
     {
         return $this->hasMany(MealPlan::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
     }
 
     public function kitchenDistances()

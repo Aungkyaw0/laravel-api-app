@@ -39,4 +39,9 @@ class Caregiver extends Model
     {
         return $this->hasMany(DietaryRequest::class);
     }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
 }

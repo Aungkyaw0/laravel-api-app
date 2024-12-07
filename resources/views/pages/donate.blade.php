@@ -82,7 +82,7 @@
     <section class="donate-hero">
         <div class="container">
             <div class="row justify-content-center text-center">
-                <div class="col-md-8">
+                <div class="col-md-8 pt-5">
                     <h1 class="mb-4">Make a Difference Today</h1>
                     <p class="lead">Your donation helps us deliver nutritious meals to those in need. Every contribution counts!</p>
                 </div>

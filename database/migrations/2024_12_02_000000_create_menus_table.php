@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->foreignId('caregiver_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('partner_id')->constrained()->cascadeOnDelete();
             $table->string('meal_type');
             $table->string('description');
             $table->date('available_date');

@@ -3,7 +3,7 @@
         <div class="row">
             <div class="col-lg-4 mb-4">
                 <div class="footer-info">
-                    <img src="{{ asset('images/logo-white.png') }}" alt="Meals on Wheels Logo" height="40" class="mb-3">
+                    <img src="{{ asset('img/logo.png') }}" alt="Meals on Wheels Logo" height="40" class="mb-3">
                     <p class="mb-4">Delivering nutritious meals and hope to those in need. Join us in making a difference in our community.</p>
                     <div class="social-links">
                         <a href="#" class="me-3"><i class="fab fa-facebook-f"></i></a>
@@ -39,11 +39,11 @@
                 <ul class="footer-contact">
                     <li>
                         <i class="fas fa-map-marker-alt me-2"></i>
-                        123 Charity Street, City, Country
+                        No 4 ThitSar Street, Yangon, Myanmar
                     </li>
                     <li>
                         <i class="fas fa-phone me-2"></i>
-                        (123) 456-7890
+                        (959) 456-7890
                     </li>
                     <li>
                         <i class="fas fa-envelope me-2"></i>

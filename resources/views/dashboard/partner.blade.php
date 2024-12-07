@@ -80,7 +80,7 @@
                         @forelse($foodServices as $service)
                             <div class="d-flex justify-content-between align-items-center mb-3 p-3 border rounded">
                                 <div>
-                                    <h6 class="mb-1">{{ $service->name }}</h6>
+                                    <h6 class="mb-1">{{ $service->service_name }}</h6>
                                     <small class="text-muted d-block">{{ $service->description }}</small>
                                     <small class="text-muted">
                                         <i class="fas fa-clock"></i> {{ $service->operating_hours[0]}}
@@ -108,8 +108,225 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Pending Orders Section -->
+            <div class="col-12 mt-4 mb-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Pending Orders</h5>
+                    </div>
+                    <div class="card-body">
+                        @if($pendingOrders->isEmpty())
+                            <div class="text-center py-4">
+                                <i class="fas fa-clipboard-list fa-2xtext-muted mb-3"></i>
+                                <p class="text-muted mb-0">No pending ordersat the moment.</p>
+                            </div>
+                        @else
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Order ID</th>
+                                            <th>Member Name</th>
+                                            <th>Meal Plan</th>
+                                            <th>Meal Type</th>
+                                            <th>Meals Included</th>
+                                            <th>Delivery Period</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($pendingOrders as $order)
+                                            <tr>
+                                                <td>#{{ $order->id }}</td>
+                                                <td>{{ $order->member->name }}</td>
+                                                <td>{{ $order->mealPlan->menu->name }}</td>
+                                                <td>{{ ucfirst($order->delivery_meal_type) }}</td>
+                                                <td>
+                                                    @if($order->mealPlan->menu)  
+                                                        <button type="button" 
+                                                                class="btn btn-info btn-sm" 
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#mealDetailsModal{{ $order->id }}">
+                                                            View Meals
+                                                        </button>
+
+                                                        <!-- Meal Details Modal -->
+                                                        <div class="modal fade" id="mealDetailsModal{{ $order->id }}" tabindex="-1">
+                                                            <div class="modal-dialog">
+                                                                <div class="modal-content">
+                                                                    <div class="modal-header">
+                                                                        <h5 class="modal-title">Meals in Order #{{ $order->id }}</h5>
+                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                    </div>
+                                                                    <div class="modal-body">
+                                                                        @if(is_array($order->mealPlan->menu->menu_items))
+                                                                            @foreach($order->mealPlan->menu->menu_items as $menuItem)
+                                                                                <div class="card mb-2">
+                                                                                    <div class="card-body">
+                                                                                        <h6 class="card-title">{{ $menuItem['name'] }}</h6>
+                                                                                        <p class="card-text small">{{ $menuItem['description'] ?? 'No description available' }}</p>
+                                                                                        <div class="mt-2">
+                                                                                            <span class="badge bg-info">{{ ucfirst($order->mealPlan->menu->meal_type) }}</span>
+                                                                                            @if(isset($menuItem['dietary_flags']))
+                                                                                                @foreach($menuItem['dietary_flags'] as $flag)
+                                                                                                    <span class="badge bg-secondary">{{ $flag }}</span>
+                                                                                                @endforeach
+                                                                                            @endif
+                                                                                        </div>
+                                                                                        @if(isset($menuItem['availability_status']))
+                                                                                            <div class="mt-2">
+                                                                                                <small class="text-muted">
+                                                                                                    Status: {{ ucfirst($menuItem['availability_status']) }}
+                                                                                                </small>
+                                                                                            </div>
+                                                                                        @endif
+                                                                                    </div>
+                                                                                </div>
+                                                                            @endforeach
+                                                                        @else
+                                                                            <p class="text-muted">No menu items available</p>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @else
+                                                        <span class="text-muted">No menu details available</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($order->delivery_start_date && $order->delivery_end_date)
+                                                        {{ $order->delivery_start_date->format('M d, Y') }} -
+                                                        {{ $order->delivery_end_date->format('M d, Y') }}
+                                                    @else
+                                                        <span class="text-muted">Not specified</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <form action="{{ route('partner.accept-order', $order) }}" method="POST">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-success btn-sm">
+                                                            Accept Order
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accepted Orders Section -->
+            <div class="col-12 mt-4 mb-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Accepted Orders</h5>
+                    </div>
+                    <div class="card-body">
+                        @if($acceptedOrders->isEmpty())
+                            <div class="text-center py-4">
+                                <i class="fas fa-check-circle fa-2x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">No accepted orders at the moment.</p>
+                            </div>
+                        @else
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Order ID</th>
+                                            <th>Member Name</th>
+                                            <th>Meal Plan</th>
+                                            <th>Meal Type</th>
+                                            <th>Meals Included</th>
+                                            <th>Delivery Period</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($acceptedOrders as $order)
+                                            <tr>
+                                                <td>#{{ $order->id }}</td>
+                                                <td>{{ $order->member->name }}</td>
+                                                <td>{{ $order->mealPlan->menu->name }}</td>
+                                                <td>{{ ucfirst($order->delivery_meal_type) }}</td>
+                                                <td>
+                                                    @if($order->mealPlan->menu)  
+                                                        <button type="button" 
+                                                                class="btn btn-info btn-sm" 
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#mealDetailsModal{{ $order->id }}">
+                                                            View Meals
+                                                        </button>
+
+                                                        <!-- Meal Details Modal -->
+                                                        <div class="modal fade" id="mealDetailsModal{{ $order->id }}" tabindex="-1">
+                                                            <div class="modal-dialog">
+                                                                <div class="modal-content">
+                                                                    <div class="modal-header">
+                                                                        <h5 class="modal-title">Meals in Order #{{ $order->id }}</h5>
+                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                    </div>
+                                                                    <div class="modal-body">
+                                                                        @if(is_array($order->mealPlan->menu->menu_items))
+                                                                            @foreach($order->mealPlan->menu->menu_items as $menuItem)
+                                                                                <div class="card mb-2">
+                                                                                    <div class="card-body">
+                                                                                        <h6 class="card-title">{{ $menuItem['name'] }}</h6>
+                                                                                        <p class="card-text small">{{ $menuItem['description'] ?? 'No description available' }}</p>
+                                                                                        <div class="mt-2">
+                                                                                            <span class="badge bg-info">{{ ucfirst($order->mealPlan->menu->meal_type) }}</span>
+                                                                                            @if(isset($menuItem['dietary_flags']))
+                                                                                                @foreach($menuItem['dietary_flags'] as $flag)
+                                                                                                    <span class="badge bg-secondary">{{ $flag }}</span>
+                                                                                                @endforeach
+                                                                                            @endif
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            @endforeach
+                                                                        @else
+                                                                            <p class="text-muted">No menu items available</p>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @else
+                                                        <span class="text-muted">No menu details available</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($order->delivery_start_date && $order->delivery_end_date)
+                                                        {{ $order->delivery_start_date->format('M d, Y') }} -
+                                                        {{ $order->delivery_end_date->format('M d, Y') }}
+                                                    @else
+                                                        <span class="text-muted">Not specified</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-success">
+                                                        Accepted
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Delivery Status Section -->
+    
 </div>
 
 <!-- Include Modals -->

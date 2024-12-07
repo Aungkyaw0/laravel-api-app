@@ -20,6 +20,8 @@ return new class extends Migration
             $table->string('address');
             $table->enum('dietary_requirement', ['none', 'vegetarian', 'vegan', 'halal', 'gluten-free']);
             $table->enum('prefer_meal', ['hot', 'frozen', 'both']);
+            $table->decimal('latitude', 10, 8)->nullable();  // Add this for latitude
+            $table->decimal('longitude', 11, 8)->nullable(); // Add this for longitude
             $table->timestamps();
         });
     }

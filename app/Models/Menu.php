@@ -15,6 +15,7 @@ class Menu extends Model
     protected $fillable = [
         'name',
         'caregiver_id',
+        'partner_id',
         'meal_type',
         'description',
         'available_date',
@@ -32,6 +33,11 @@ class Menu extends Model
     public function caregiver(): BelongsTo
     {
         return $this->belongsTo(Caregiver::class);
+    }
+
+    public function partner(): BelongsTo
+    {
+        return $this->belongsTo(Partner::class);
     }
 
     public function meals(): BelongsToMany

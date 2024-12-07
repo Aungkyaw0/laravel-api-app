@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\Relations\HasMany;
 class Partner extends Model
 {
     protected $fillable = [
@@ -15,10 +15,21 @@ class Partner extends Model
         'country',
         'business_type',
         'service_offer',
+        'latitude',
+        'longitude'
     ];
 
     public function user() {
         
         return $this->belongsTo(User::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+    public function mealPlans(): HasMany
+    {
+        return $this->hasMany(MealPlan::class);
     }
 }

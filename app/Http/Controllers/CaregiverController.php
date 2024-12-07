@@ -5,6 +5,7 @@ use App\Models\User;
 
 use App\Models\Caregiver;
 use App\Models\Member;
+use App\Models\Partner;
 use App\Models\MealPlan;
 use App\Models\DietaryRequest;
 use App\Models\Menu;
@@ -18,7 +19,9 @@ use Illuminate\Support\Facades\Auth;
 use App\Services\DeliveryService;
 use App\Services\RouteService;
 use App\Services\MealTypeService;   
+
 use Illuminate\Support\Facades\Log;
+
 class CaregiverController extends Controller implements HasMiddleware
 {
     public static function middleware()
@@ -180,6 +183,7 @@ class CaregiverController extends Controller implements HasMiddleware
             $menu = Menu::create([
                 'name' => $validated['name'],
                 'caregiver_id' => $caregiver->id,
+                'partner_id' => $foodService['partner_id'],
                 'meal_type' => $validated['meal_type'],
                 'description' => $validated['description'],
                 'available_date' => $validated['available_date'],
@@ -239,13 +243,39 @@ class CaregiverController extends Controller implements HasMiddleware
             $member = Member::findOrFail($request->member_id);
             $menu = Menu::findOrFail($request->menu_id);
             $caregiver = Auth::user()->caregiver;
+            
+            // Get partner information through the menu
+            $partner = Partner::findOrFail($menu->partner_id);
+
+            // Extract city from locations (assuming format includes city)
+            $memberCity = explode(',', $member->address)[0];
+            $partnerCity = explode(',', $partner->location)[0];
+
+            // Check if cities match (case-insensitive)
+            if (strtolower(trim($memberCity)) !== strtolower(trim($partnerCity))) {
+                return redirect()
+                    ->route('caregiver.dashboard')
+                    ->with('error', "Can't Create Meal Plan, Location is Out of Kitchen Service");
+            }
+
+            // Calculate distance between member and partner
+            $distance = $this->calculateDistance(
+                $member->latitude,
+                $member->longitude,
+                $partner->latitude,
+                $partner->longitude
+            );
+
+            // Determine delivery meal type based on distance
+            $deliverMealType = $distance <= 10 ? 'Hot Meal' : 'Frozen Meal';
 
             // Create the meal plan
             $mealPlan = MealPlan::create([
                 'member_id' => $member->id,
                 'caregiver_id' => $caregiver->id,
                 'menu_id' => $menu->id,
-                'meal_type' => $menu->meal_type,
+                'partner_id' => $partner->id,
+                'deliver_meal_type' => $deliverMealType,
                 'meal_date' => $request->meal_date,
                 'is_general' => true,
                 'dietary_category' => $member->dietary_requirement,
@@ -256,9 +286,6 @@ class CaregiverController extends Controller implements HasMiddleware
                 'status' => 'published'
             ]);
 
-            // Create delivery task
-            $deliveryService = new DeliveryService(new RouteService());
-            $delivery = $deliveryService->createDeliveryFromMealPlan($mealPlan);
 
             return redirect()
                 ->route('caregiver.dashboard')
@@ -270,6 +297,25 @@ class CaregiverController extends Controller implements HasMiddleware
                 ->route('caregiver.dashboard')
                 ->with('error', 'Failed to assign meal plan. Please try again.');
         }
+    }
+
+    /**
+     * Calculate distance between two points using Haversine formula
+     */
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371; // Earth's radius in kilometers
+
+        $latDelta = deg2rad($lat2 - $lat1);
+        $lonDelta = deg2rad($lon2 - $lon1);
+
+        $a = sin($latDelta / 2) * sin($latDelta / 2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($lonDelta / 2) * sin($lonDelta / 2);
+        
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c; // Distance in kilometers
     }
 
     /**
@@ -296,6 +342,8 @@ class CaregiverController extends Controller implements HasMiddleware
             $foodServices = FoodService::with(['meals' => function($query) {
                 $query->where('is_available', 1);
             }])->where('status', 'active')->get();
+
+            $partner = 
 
             $activeMenus = Menu::where('caregiver_id', $caregiver->id)
                 ->where('status', 'published')

@@ -6,7 +6,7 @@
 <style>
     .login-section {
         min-height: 100vh;
-        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('{{ asset("img/login-bg.jpg") }}');
+        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('{{ asset("img/login-hero.png") }}');
         background-size: cover;
         background-position: center;
         display: flex;
@@ -100,7 +100,7 @@
 @endsection
 
 @section('content')
-<section class="login-section">
+<section class="login-section mt-5 pt-5">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-5">

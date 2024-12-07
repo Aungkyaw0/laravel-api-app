@@ -118,7 +118,7 @@
                                     <h6 class="fw-bold mb-2">
                                         <i class="fas fa-user-check me-2 text-primary"></i>Created By
                                     </h6>
-                                    <p class="mb-0">{{ $menu->caregiver->user->name }}</p>
+                                    <p class="mb-0">{{ $menu->caregiver->name }}</p>
                                 </div>
                             </div>
                         </div>

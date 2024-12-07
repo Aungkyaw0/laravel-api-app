@@ -11,10 +11,26 @@
             <form action="{{ route('caregiver.publish-meal-plan') }}" method="POST">
                 @csrf
                 <div class="modal-body">
-                    <div class="member-info mb-4 p-3 bg-light rounded">
-                        <h6 class="text-muted mb-2">Member Information</h6>
-                        <p class="mb-1"><strong>Name:</strong> <span id="memberName"> {{ $member->name }} </span></p>
-                        <p class="mb-0"><strong>Dietary Requirement:</strong> <span id="memberDietary"> {{ $member->dietary_requirement }} </span></p>
+                    <div class="row">
+                        <!-- Left side - Member Info -->
+                        <div class="col-md-6">
+                            <div class="member-info mb-4 p-3 bg-light rounded">
+                                <h6 class="text-muted mb-2">Member Information</h6>
+                                <p class="mb-1"><strong>Name:</strong> <span id="memberName"> {{ $member->name }} </span></p>
+                                <p class="mb-0"><strong>Dietary Requirement:</strong> <span id="memberDietary"> {{ $member->dietary_requirement }} </span></p>
+                                <p class="mb-0"><strong>Location:</strong> <span id="memberAddress"> {{ $member->address }} </span></p>
+                            </div>
+                        </div>
+                        
+                        <!-- Right side - Partner Info -->
+                        <div class="col-md-6">
+                            <div class="partner-info mb-4 p-3 bg-light rounded">
+                                <h6 class="text-muted mb-2">Partner Information</h6>
+                                <p class="mb-1"><strong>Name:</strong> <span id="partnerName"></span></p>
+                                <p class="mb-0"><strong>Location:</strong> <span id="partnerLocation"></span></p>
+                                <p class="mb-0"><strong>Delivery Type:</strong> <span id="deliveryType"></span></p>
+                            </div>
+                        </div>
                     </div>
 
                     <input type="hidden" name="member_id" id="memberId">
@@ -31,7 +47,13 @@
                                            value="{{ $menu->id }}" 
                                            required>
                                     <label class="btn btn-outline-primary w-100 text-start" 
-                                           for="menu{{ $menu->id }}">
+                                           for="menu{{ $menu->id }}"
+                                           data-partner="{{ json_encode([
+                                               'company_name' => $menu->partner->company_name,
+                                               'location' => $menu->partner->location,
+                                               'latitude' => $menu->partner->latitude,
+                                               'longitude' => $menu->partner->longitude
+                                           ]) }}">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <h6 class="mb-1">{{ $menu->name }}</h6>
@@ -77,6 +99,8 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const assignMealPlanModal = document.getElementById('assignMealPlanModal');
+        const menuRadios = document.querySelectorAll('input[name="menu_id"]');
+
         if (assignMealPlanModal) {
             assignMealPlanModal.addEventListener('show.bs.modal', function(event) {
                 const button = event.relatedTarget;
@@ -84,11 +108,34 @@
                 const memberName = button.getAttribute('data-member-name');
                 const dietaryRequirement = button.getAttribute('data-dietary-requirement');
                 
-                // Update modal content
+                // Update member info
                 document.getElementById('memberId').value = memberId;
                 document.getElementById('memberName').textContent = memberName;
                 document.getElementById('memberDietary').textContent = dietaryRequirement;
             });
         }
+
+        // Add event listeners to menu radio buttons
+        menuRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    const menuId = this.value;
+                    const menuLabel = document.querySelector(`label[for="menu${menuId}"]`);
+                    const partnerData = JSON.parse(menuLabel.getAttribute('data-partner'));
+                    
+                    // Update partner info
+                    document.getElementById('partnerName').textContent = partnerData.company_name;
+                    document.getElementById('partnerLocation').textContent = partnerData.location;
+                    
+                    // Calculate and display delivery type based on distance
+                    const distance = calculateDistance(
+                        memberLat, memberLng,  // You'll need to add these as data attributes
+                        partnerData.latitude, partnerData.longitude
+                    );
+                    const deliveryType = distance <= 10 ? 'Hot Meal' : 'Frozen Meal';
+                    document.getElementById('deliveryType').textContent = deliveryType;
+                }
+            });
+        });
     });
-    </script>
+</script>

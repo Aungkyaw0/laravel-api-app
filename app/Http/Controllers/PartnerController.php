@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Partner;
 use App\Models\FoodService;
 use App\Models\Meal;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\HasMiddleware;   
 use Illuminate\Routing\Controllers\Middleware;
 
 class PartnerController extends Controller
@@ -47,9 +48,25 @@ class PartnerController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get();
 
+            // Fetch pending orders
+            $pendingOrders = Order::where('partner_id', $partner->id)
+                ->where('partner_status', 'pending')
+                ->with(['member', 'mealPlan', 'menu'])
+                ->get();
+
+            // Fetch accepted orders
+            $acceptedOrders = Order::where('partner_id', $partner->id)
+                ->where('partner_status', 'accepted')
+                ->where('delivery_status', 'assigned')
+                ->with(['member', 'mealPlan', 'menu'])
+                ->get();
+
             return view('dashboard.partner', compact(
                 'activeFoodServices',
-                'foodServices'
+                'foodServices',
+                'partner',
+                'pendingOrders',
+                'acceptedOrders'
             ));
         } catch (\Exception $e) {
             Log::error('Partner Dashboard Error: ' . $e->getMessage());
@@ -168,5 +185,27 @@ class PartnerController extends Controller
 
         return redirect()->route('partner.dashboard')
             ->with('success', 'Profile updated successfully');
+    }
+
+    public function acceptOrder(Order $order)
+    {
+        try {
+            if ($order->partner_id !== Auth::user()->partner->id) {
+                return back()->with('error', 'Unauthorized action.');
+            }
+
+            $order->update([
+                'partner_status' => 'accepted',
+                'delivery_start_date' => now()
+            ]);
+
+            return redirect()->route('partner.dashboard')
+            ->with('success', 'Order Accepted Successfully');
+            
+        } catch (\Exception $e) {
+            Log::error('Accept Order Error: ' . $e->getMessage());
+            return redirect()->route('partner.dashboard')
+            ->with('error', 'Failed to accept order. Please try again.');
+        }
     }
 }

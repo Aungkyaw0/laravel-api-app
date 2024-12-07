@@ -7,7 +7,7 @@
     .about-hero {
         background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('{{ asset("img/about-hero.png") }}');
         background-size: cover;
-        background-position: top;
+        background-position: center;
         padding: 100px 0;
         color: white;
     }
@@ -88,7 +88,7 @@
     <section class="about-hero">
         <div class="container">
             <div class="row justify-content-center text-center">
-                <div class="col-md-8">
+                <div class="col-md-8 pt-5">
                     <h1 class="mb-4">Our Mission to Serve</h1>
                     <p class="lead">MerryMeal is dedicated to providing nutritious meals to vulnerable adults who cannot cook for themselves due to age, illness, or disability.</p>
                 </div>
