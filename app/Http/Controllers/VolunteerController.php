@@ -140,48 +140,6 @@ class VolunteerController extends Controller
         ]);
     }
 
-    public function rejectDelivery(Request $request, Delivery $delivery)
-    {
-        $validated = $request->validate([
-            'reason' => 'required|string|max:255'
-        ]);
-
-        if ($delivery->status !== 'pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'This delivery cannot be rejected'
-            ], 422);
-        }
-
-        $delivery->update([
-            'status' => 'rejected',
-            'rejection_reason' => $validated['reason']
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Delivery rejected successfully'
-        ]);
-    }
-
-    public function getDeliveryRoute(Delivery $delivery)
-    {
-        if ($delivery->volunteer_id !== Auth::user()->volunteer->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized to view this delivery'
-            ], 403);
-        }
-
-        return response()->json([
-            'success' => true,
-            'route' => $delivery->route_details,
-            'distance' => $delivery->distance,
-            'pickup_address' => $delivery->pickup_address,
-            'delivery_address' => $delivery->delivery_address
-        ]);
-    }
-
     public function completeDelivery(Request $request, Order $delivery)
     {
         try {

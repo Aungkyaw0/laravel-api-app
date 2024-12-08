@@ -14,7 +14,6 @@
         background-position: center;
         padding: 7rem 0;
         color: white;
-        margin-bottom: 2rem;
     }
 
     .stats-card {
@@ -105,7 +104,7 @@
 
 @section('content')
     <!-- Dashboard Header -->
-    <section class="dashboard-header">
+    <section class="dashboard-header" style="margin-top: 100px;">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-8">

@@ -21,10 +21,6 @@ class Volunteer extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function availabilities()
-    {
-        return $this->hasMany(VolunteerAvailability::class);
-    }
 
     public function deliveries()
     {

@@ -302,7 +302,11 @@ class AuthController extends Controller
                 $request->session()->regenerate();
                 $user = Auth::user();
                 
-                Log::info('User logged in successfully', ['user_id' => $user->id, 'role' => $user->role]);
+                Log::info('User logged in successfully', [
+                    'user_id' => $user->id, 
+                    'email' => $user->email, 
+                    'role' => $user->role
+                ]);
 
                 // Check user role and redirect accordingly
                 switch ($user->role) {
@@ -316,7 +320,6 @@ class AuthController extends Controller
                         return redirect()->route('volunteer.dashboard');
                     case 'partner':
                         if (!$user->partner) {
-                            Log::error('Partner profile not found for user', ['user_id' => $user->id]);
                             Auth::logout();
                             return back()->withErrors([
                                 'email' => 'Partner profile not found. Please contact support.',
@@ -324,7 +327,10 @@ class AuthController extends Controller
                         }
                         return redirect()->route('partner.dashboard');
                     default:
-                        return redirect()->route('home');
+                        Auth::logout();
+                        return back()->withErrors([
+                            'email' => 'Invalid user role.',
+                        ]);
                 }
             }
 

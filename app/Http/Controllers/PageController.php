@@ -25,6 +25,7 @@ class PageController extends Controller
     {
         return view('pages.donate');
     }
+    
 
     public function submitContact(Request $request)
     {

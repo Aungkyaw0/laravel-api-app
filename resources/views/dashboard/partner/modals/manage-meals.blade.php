@@ -6,23 +6,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                @if(session('meal_success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        {{ session('meal_success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                @endif
-
-                @if($errors->any())
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <ul class="mb-0">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                @endif
+                
 
                 <!-- Add New Meal Form -->
                 <form id="addMealForm" action="{{ route('partner.food-service.add-meal', 0) }}" method="POST">

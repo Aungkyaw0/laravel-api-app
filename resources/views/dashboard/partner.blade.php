@@ -40,7 +40,7 @@
 @endsection
 
 @section('content')
-<div class="dashboard-container">
+<div class="dashboard-container" style="margin-top: 100px;">
     <!-- Dashboard Header -->
     <div class="dashboard-header">
         <div class="container">
@@ -70,9 +70,20 @@
                         </button>
                     </div>
                     <div class="card-body">
-                        @if(session('success'))
+                        @if(session('meal_success'))
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                {{ session('success') }}
+                                {{ session('meal_success') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        @endif
+
+                        @if($errors->any())
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <ul class="mb-0">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
                                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                             </div>
                         @endif

@@ -22,11 +22,11 @@ MerryMeal is a charitable organization dedicated to providing meal services to v
 ## Features
 
 - 🔒 Registeration, Login, Logout Module
-- 🚀 Member Module
-- 💾 Caregiver Module
-- ✨ Partner Module
-- 📱 Volunteer Moduel
-- 🔒 Admin Module
+- 🚀 Member Module - Request Dietary Update, Request Order, View Order History
+- 💾 Caregiver Module - View Members, Create Menu, Create & Assign Meal Plan, Accept Dietary Request, View Dietary Request History
+- ✨ Partner Module - Create Food Service, Add Meal, Accept Order, View Order History
+- 📱 Volunteer Moduel - Update Availablity, View Delivery, Accept Delivery, View Completed Delivery
+- 🔒 Admin Module - Manage Users, View All Meal Plans, Dietary Requests, Orders, Activate Food Service
 
 ## Getting Started
 
@@ -36,7 +36,6 @@ MerryMeal is a charitable organization dedicated to providing meal services to v
 - Composer
 - Node.js & NPM
 - MySQL/PostgreSQL
-- Any other specific requirements
 
 ### Installation
 
@@ -58,19 +57,31 @@ composer install
 npm install
 ```
 
-4. Create environment file
+4. Create Tables and Seed Data
+
+```bash
+php artisan migrate
+```
+
+5. Create Admin Data
+
+```bash
+php artisan db:seed --class=AdminUserSeeder
+```
+
+6. Create environment file
 
 ```bash
 cp .env.example .env
 ```
 
-5. Generate application key
+7. Generate application key
 
 ```bash
 php artisan key:generate
 ```
 
-6. Run
+8. Run
 
 ```bash
 php artisan serve
@@ -82,7 +93,7 @@ php artisan serve
 - Laravel
 - MySQL/PostgreSQL
 - Node.js & NPM
-- React 
+- Blade Template 
 
 ## Environment Variables
 
@@ -121,10 +132,7 @@ php artisan serve
 - `MIX_PUSHER_APP_SECRET`
 - `MIX_PUSHER_APP_CLUSTER`
 
-## API Documentation
 
-- [Swagger](https://swagger.io/)
-- [Postman](https://www.postman.com/)
 
 ## Contributing
 

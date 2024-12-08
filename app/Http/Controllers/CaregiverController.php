@@ -27,7 +27,7 @@ class CaregiverController extends Controller implements HasMiddleware
     public static function middleware()
     {
         return [
-            new Middleware('auth:sanctum', except: ['index', 'show'])
+            new Middleware('auth:sanctum', except: ['index'])
         ];
     }
     /**
@@ -58,39 +58,12 @@ class CaregiverController extends Controller implements HasMiddleware
         return $post;
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Caregiver $caregiver)
-    {
-        return $caregiver;
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Caregiver $member)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Caregiver $member)
-    {
-        //
-    }
 
     /**
      * Fetch all members assigned to the caregiver
      */
     public function viewMembers(Request $request)
     {
-        // $caregiver = $request->user()->caregivers()->firstOrFail();
-        // return Member::whereHas('mealPlans', function($query) use ($caregiver) {
-        //     $query->where('caregiver_id', $caregiver->id);
-        // })->get();
         return Member::all();
     }
 

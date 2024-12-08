@@ -84,12 +84,18 @@ class User extends Authenticatable
         return $this->hasOne(Volunteer::class);
     }
 
+    public function admin()
+    {
+        return $this->hasOne(Admin::class);
+    }
+
     public function getRoleAttribute()
     {
         if ($this->partner()->exists()) return 'partner';
         if ($this->caregiver()->exists()) return 'caregiver';
         if ($this->member()->exists()) return 'member';
         if ($this->volunteer()->exists()) return 'volunteer';
+        if ($this->admin()->exists()) return 'admin';
         return 'user';
     }
 }

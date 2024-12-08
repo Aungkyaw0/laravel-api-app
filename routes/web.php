@@ -8,7 +8,8 @@ use App\Http\Controllers\MemberController;
 use App\Http\Controllers\CaregiverController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\VolunteerController;
-
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Admin\AdminMemberController;
 
 // Public Pages
 Route::get('/', [PageController::class, 'home'])->name('home');
@@ -89,6 +90,22 @@ Route::prefix('volunteer')->group(function () {
     Route::post('/deliveries/{delivery}/complete', [VolunteerController::class, 'completeDelivery'])->name('volunteer.complete-delivery');
     Route::post('/orders/{order}/accept', [VolunteerController::class, 'acceptOrder'])->name('volunteer.accept-order');
 });
+
+// Admin Routes
+Route::prefix('admin')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::put('/members/{id}', [AdminController::class, 'updateMember'])->name('admin.members.update');
+    Route::put('/caregivers/{id}', [AdminController::class, 'updateCaregiver'])->name('admin.caregivers.update');
+    Route::put('/partners/{id}', [AdminController::class, 'updatePartner'])->name('admin.partners.update');
+    Route::put('/volunteers/{id}', [AdminController::class, 'updateVolunteer'])->name('admin.volunteers.update');
+    Route::delete('/members/{id}', [AdminController::class, 'destroyMember'])->name('admin.members.destroy');
+    Route::delete('/caregivers/{id}', [AdminController::class, 'destroyCaregiver'])->name('admin.caregivers.destroy');
+    Route::delete('/partners/{id}', [AdminController::class, 'destroyPartner'])->name('admin.partners.destroy');
+    Route::delete('/volunteers/{id}', [AdminController::class, 'destroyVolunteer'])->name('admin.volunteers.destroy');
+    Route::put('/food-services/{id}/activate', [AdminController::class, 'activateFoodService'])->name('admin.food-services.activate');
+});
+
+
 
 
 

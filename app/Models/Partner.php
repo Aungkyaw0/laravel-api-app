@@ -32,4 +32,8 @@ class Partner extends Model
     {
         return $this->hasMany(MealPlan::class);
     }
+    public function foodServices(): HasMany
+    {
+        return $this->hasMany(FoodService::class);
+    }
 }

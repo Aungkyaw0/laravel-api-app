@@ -46,10 +46,6 @@ class Member extends Model
         return $this->hasMany(Order::class);
     }
 
-    public function kitchenDistances()
-    {
-        return $this->hasMany(MemberKitchenDistance::class);
-    }
 
     public function preferredKitchen()
     {
