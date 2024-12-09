@@ -162,6 +162,9 @@
     <!-- Registration Section -->
     <section class="py-5">
         <div class="container">
+            <!-- Add this message container -->
+            <div id="messageContainer"></div>
+            
             <!-- User Type Selection -->
             <div class="row g-4" id="userTypeSelection">
                 <div class="col-md-3">
@@ -532,122 +535,103 @@ function showUserTypeSelection() {
     });
 }
 
-// Form validation and submission handling
+async function handleRegistration(form) {
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerText;
+    
+    try {
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+        
+        const formData = new FormData(form);
+        const response = await fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Show success message
+            showMessage('success', result.message || 'Registration successful! Redirecting to login...');
+            
+            // Clear form
+            form.reset();
+            
+            // Redirect after delay
+            setTimeout(() => {
+                window.location.href = result.redirect || '/login';
+            }, 2000);
+        } else {
+            // Handle validation errors
+            if (result.errors) {
+                Object.keys(result.errors).forEach(key => {
+                    const field = form.querySelector(`[name="${key}"]`);
+                    if (field) {
+                        field.classList.add('is-invalid');
+                        
+                        // Add error message below the field
+                        const feedback = field.nextElementSibling || document.createElement('div');
+                        feedback.className = 'invalid-feedback';
+                        feedback.textContent = result.errors[key][0];
+                        if (!field.nextElementSibling) {
+                            field.parentNode.appendChild(feedback);
+                        }
+                    }
+                });
+            }
+            
+            // Show general error message
+            showMessage('error', result.message || 'Registration failed. Please check your inputs.');
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        showMessage('error', 'An unexpected error occurred. Please try again.');
+    } finally {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+function showMessage(type, message) {
+    const messageContainer = document.getElementById('messageContainer');
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    
+    messageContainer.innerHTML = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    
+    // Scroll to message
+    messageContainer.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Add form submission handlers
 document.querySelectorAll('.registration-form form').forEach(form => {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
-        
-        // Validate all fields
-        let isValid = true;
-        form.querySelectorAll('input, select').forEach(field => {
-            if (!validateField(field)) {
-                isValid = false;
-            }
-        });
-
-        if (!isValid) {
-            showError(form, 'Please correct the errors before submitting.');
-            return;
-        }
-        
-        // Show loading state
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerText;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
-        
-        try {
-            const formData = new FormData(form);
-            const response = await fetch(form.action, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json'
-                },
-                body: formData  // Keep as FormData, don't convert to JSON
-            });
-
-            const result = await response.json();
-            console.log('Response:', result); // Add this for debugging
-
-            if (result.success) {
-                // Show success message
-                showSuccess(result.message);
-                
-                // Redirect after delay
-                setTimeout(() => {
-                    window.location.href = result.redirect;
-                }, 2000);
-            } else {
-                // Show validation errors
-                if (result.errors) {
-                    Object.keys(result.errors).forEach(key => {
-                        const field = form.querySelector(`[name="${key}"]`);
-                        if (field) {
-                            field.classList.add('is-invalid');
-                            // Remove existing error message if any
-                            const existingError = field.parentNode.querySelector('.invalid-feedback');
-                            if (existingError) {
-                                existingError.remove();
-                            }
-                            // Add new error message
-                            const errorDiv = document.createElement('div');
-                            errorDiv.className = 'invalid-feedback';
-                            errorDiv.style.display = 'block';
-                            errorDiv.textContent = result.errors[key][0];
-                            field.parentNode.appendChild(errorDiv);
-                        }
-                    });
-                }
-                showError(form, result.message || 'Registration failed. Please check your inputs.');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showError(form, 'An error occurred. Please try again.');
-        } finally {
-            // Reset button state
-            submitBtn.disabled = false;
-            submitBtn.innerText = originalText;
-        }
+        await handleRegistration(this);
     });
 });
 
-// Add these helper functions if not already present
-function showSuccess(message) {
-    // Create success alert
-    const alertDiv = document.createElement('div');
-    alertDiv.className = 'alert alert-success alert-dismissible fade show';
-    alertDiv.setAttribute('role', 'alert');
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
-
-    // Find the form container and insert alert at the top
-    const form = document.querySelector('.active-form');
-    if (form) {
-        form.insertAdjacentElement('beforebegin', alertDiv);
-    }
-
-    // Redirect after delay
-    setTimeout(() => {
-        window.location.href = '/login';
-    }, 2000);
-}
-
-function showError(form, message) {
-    // Create error alert
-    const alertDiv = document.createElement('div');
-    alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-    alertDiv.setAttribute('role', 'alert');
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
-
-    // Insert alert at the top of the form
-    form.insertAdjacentElement('beforebegin', alertDiv);
-}
+// Clear validation errors when user starts typing
+document.querySelectorAll('.form-control').forEach(input => {
+    input.addEventListener('input', function() {
+        this.classList.remove('is-invalid');
+        const feedback = this.nextElementSibling;
+        if (feedback && feedback.classList.contains('invalid-feedback')) {
+            feedback.remove();
+        }
+    });
+});
 
 document.querySelectorAll('input[name="password"]').forEach(passwordInput => {
     const strengthMeter = document.createElement('div');
@@ -742,91 +726,6 @@ function updatePasswordStrengthIndicator(meter, strength) {
             `<small class="text-danger d-block">Required: ${strength.feedback.join(', ')}</small>` : 
             ''}
     `;
-}
-
-document.querySelectorAll('.registration-form form').forEach(form => {
-    // Add validation for each input
-    form.querySelectorAll('input, select').forEach(field => {
-        field.addEventListener('blur', function() {
-            validateField(this);
-        });
-
-        field.addEventListener('input', function() {
-            // Remove error when user starts typing
-            const errorDiv = this.parentNode.querySelector('.field-error');
-            if (errorDiv) {
-                errorDiv.remove();
-            }
-            this.classList.remove('is-invalid');
-        });
-    });
-});
-
-function validateField(field) {
-    let isValid = true;
-    let errorMessage = '';
-
-    // Remove existing error
-    const existingError = field.parentNode.querySelector('.field-error');
-    if (existingError) {
-        existingError.remove();
-    }
-
-    // Required field validation
-    if (field.required && !field.value.trim()) {
-        isValid = false;
-        errorMessage = 'This field is required';
-    }
-
-    // Email validation
-    if (field.type === 'email' && field.value) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(field.value)) {
-            isValid = false;
-            errorMessage = 'Please enter a valid email address';
-        }
-    }
-
-    // Phone validation
-    if (field.name === 'phone' && field.value) {
-        const phoneRegex = /^\+?[\d\s-]{10,}$/;
-        if (!phoneRegex.test(field.value)) {
-            isValid = false;
-            errorMessage = 'Please enter a valid phone number';
-        }
-    }
-
-    // Password validation
-    if (field.name === 'password' && field.value) {
-        const strength = checkPasswordStrength(field.value);
-        if (strength.score < 3) {
-            isValid = false;
-            errorMessage = 'Password is too weak';
-        }
-    }
-
-    // Password confirmation validation
-    if (field.name === 'password_confirmation') {
-        const password = field.closest('form').querySelector('input[name="password"]');
-        if (field.value !== password.value) {
-            isValid = false;
-            errorMessage = 'Passwords do not match';
-        }
-    }
-
-    // Update field styling
-    if (!isValid) {
-        field.classList.add('is-invalid');
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'field-error text-danger small mt-1';
-        errorDiv.textContent = errorMessage;
-        field.parentNode.appendChild(errorDiv);
-    } else {
-        field.classList.remove('is-invalid');
-        field.classList.add('is-valid');
-    }
-
-    return isValid;
 }
 
 // Add this JavaScript to handle the vehicle details visibility

@@ -13,11 +13,18 @@ class FoodService extends Model
         'cuisine_type',
         'service_area',
         'operating_hours',
-        'status'
+        'status',
+        'food_safety_certified',
+        'last_inspection_date',
+        'safety_rating',
+        'safety_procedures'
     ];
 
     protected $casts = [
-        'operating_hours' => 'array'
+        'operating_hours' => 'array',
+        'safety_procedures' => 'array',
+        'food_safety_certified' => 'boolean',
+        'last_inspection_date' => 'date'
     ];
 
     public function partner()

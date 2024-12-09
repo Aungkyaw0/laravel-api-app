@@ -313,13 +313,22 @@ class AdminController extends Controller implements HasMiddleware
     public function activateFoodService(Request $request, $id)
     {
         try {
+            // Validate the request
+            $request->validate([
+                'safety_rating' => 'required|integer|min:1|max:5',
+                'confirm' => 'required|in:1'
+            ]);
+
             $foodService = FoodService::findOrFail($id);
             
+            // Update both status and safety rating
             $foodService->update([
-                'status' => 'active'
+                'status' => 'active',
+                'safety_rating' => $request->safety_rating,
+                'last_inspection_date' => now() // Also update the inspection date
             ]);
             
-            return redirect()->back()->with('success', 'Food service activated successfully');
+            return redirect()->back()->with('success', 'Food service activated successfully with safety rating: ' . $request->safety_rating);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Failed to activate food service: ' . $e->getMessage());
         }

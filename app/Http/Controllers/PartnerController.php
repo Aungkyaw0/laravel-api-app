@@ -82,19 +82,27 @@ class PartnerController extends Controller
             'description' => 'required|string',
             'cuisine_type' => 'required|string',
             'service_area' => 'required|string',
-            'operating_hours' => 'required|array'
+            'operating_hours' => 'required|array',
+            'food_safety_certified' => 'nullable|boolean',
+            'last_inspection_date' => 'required|date',
+            'safety_procedures' => 'nullable|array'
         ]);
 
         $partner = Auth::user()->partner;
-    
-
+        
+        // Handle the checkbox input properly
+        $fields['food_safety_certified'] = $request->has('food_safety_certified');
+        
+        // Handle safety procedures array
+        $fields['safety_procedures'] = $request->safety_procedures ?? [];
+        
         $fields['partner_id'] = $partner->id;
         $fields['status'] = 'pending';
 
         $foodService = FoodService::create($fields);
 
         return redirect()->route('partner.dashboard')
-            ->with('success', 'Food service created successfully and pending approval');
+            ->with('success', 'Food service created successfully and pending rating approval');
     }
 
     public function getMeals(FoodService $foodService)

@@ -70,7 +70,8 @@ Route::prefix(prefix: 'caregiver')->group(function () {
 // Partner Routes
 Route::prefix('partner')->group(function () {
     Route::get('/dashboard', [PartnerController::class, 'dashboard'])->name('partner.dashboard');
-    Route::post('/food-service', [PartnerController::class, 'createFoodService'])->name('partner.food-services.store');
+    Route::post('/food-service', [PartnerController::class, 'createFoodService'])
+        ->name('partner.food-services.store');
     Route::get('/food-services/{foodService}/meals', [PartnerController::class, 'getMeals'])->name('partner.food-service.meals');
     Route::post('/food-services/{foodService}/meals', [PartnerController::class, 'addMeal'])->name('partner.food-service.add-meal');
     Route::put('/food-services/{foodService}/meals/{meal}', [PartnerController::class, 'updateMeal'])->name('partner.food-service.update-meal');

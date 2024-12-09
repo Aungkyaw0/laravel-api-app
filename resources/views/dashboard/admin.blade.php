@@ -1765,21 +1765,38 @@
                 <div class="modal-content">
                     <div class="modal-header bg-success text-white border-0">
                         <h5 class="modal-title" id="activateFoodServiceModalLabel">
-                            <i class="fas fa-check-circle me-2"></i>Confirm Activation
+                            <i class="fas fa-check-circle me-2"></i>Activate Food Service
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form id="activateFoodServiceForm" method="POST">
                         @csrf
                         @method('PUT')
-                        <div class="modal-body text-center py-4">
+                        <div class="modal-body py-4">
                             <input type="hidden" name="confirm" value="1">
                             
-                            <div class="mb-3">
+                            <div class="text-center mb-4">
                                 <i class="fas fa-store-alt fa-3x text-success mb-3"></i>
                                 <h5 class="mb-2">Activate Food Service</h5>
-                                <p class="mb-0">Are you sure you want to activate <span id="service_name_display" class="fw-bold"></span>?</p>
-                                <p class="text-muted small">This will allow the service to start accepting orders.</p>
+                                <p class="mb-0">You are about to activate <span id="service_name_display" class="fw-bold"></span></p>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Safety Rating <span class="text-danger">*</span></label>
+                                <div class="rating-input-wrapper d-flex align-items-center gap-2">
+                                    <input type="range" class="form-range" id="safety_rating" name="safety_rating" 
+                                           min="1" max="5" value="3" 
+                                           oninput="document.getElementById('rating_display').textContent = this.value">
+                                    <span id="rating_display" class="badge bg-primary">3</span>
+                                    <small class="text-muted ms-2">(1-Poor, 5-Excellent)</small>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info mt-3">
+                                <small>
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Please rate the food service based on their safety standards, cleanliness, and food handling practices.
+                                </small>
                             </div>
                         </div>
                         <div class="modal-footer bg-light border-0">

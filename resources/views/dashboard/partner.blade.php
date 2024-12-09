@@ -94,8 +94,16 @@
                                     <h6 class="mb-1">{{ $service->service_name }}</h6>
                                     <small class="text-muted d-block">{{ $service->description }}</small>
                                     <small class="text-muted">
-                                        <i class="fas fa-clock"></i> {{ $service->operating_hours[0]}}
+                                        <i class="fas fa-clock"></i> {{ $service->operating_hours[0] }}
                                     </small>
+                                    <div class="mt-2">
+                                        <span class="badge bg-{{ $service->food_safety_certified ? 'success' : 'warning' }}">
+                                            {{ $service->food_safety_certified ? 'Safety Certified' : 'Certification Pending' }}
+                                        </span>
+                                        <span class="badge bg-info ms-2">
+                                            Safety Rating: {{ $service->safety_rating }}/5
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="d-flex align-items-center">
                                     <span class="badge bg-{{ $service->status === 'active' ? 'success' : ($service->status === 'pending' ? 'warning' : 'secondary') }} me-2">
