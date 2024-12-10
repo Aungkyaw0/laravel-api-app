@@ -8,7 +8,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Custom CSS -->
     <style>
         :root {
@@ -250,6 +249,20 @@
     @yield('styles')
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
+    <!-- Add preload for critical assets -->
+    <link rel="preload" href="{{ asset('css/app.css') }}" as="style">
+    <link rel="preload" href="{{ asset('js/app.js') }}" as="script">
+    
+    <!-- Add preconnect for external resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Defer non-critical CSS -->
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/non-critical.css') }}" media="print" onload="this.media='all'">
+
+    <!-- Add meta description for SEO -->
+    <meta name="description" content="Meals on Wheels - Delivering hope one meal at a time">
 </head>
 <body>
     @auth
@@ -285,11 +298,21 @@
 
     <!-- Bootstrap JS -->
     <!-- Core JS Files -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom Scripts -->
     @stack('scripts')
     @yield('scripts')
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('ServiceWorker registered'))
+                    .catch(err => console.log('ServiceWorker registration failed:', err));
+            });
+        }
+    </script>
 </body>
 </html> 

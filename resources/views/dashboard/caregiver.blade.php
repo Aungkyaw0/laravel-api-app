@@ -288,7 +288,7 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <h1>Welcome, {{ Auth::user()->name }}!</h1>
+                    <h1>Welcome, {{ Auth::user()->caregiver->name }}!</h1>
                     <p class="lead mb-0">Manage your members and meal services</p>
                 </div>
                 <div class="col-md-4 text-md-end">
@@ -351,7 +351,7 @@
         <!-- Main Content -->
         <div class="row">
             <!-- Left Column - Member Management -->
-            <div class="col-lg-6">
+            <div class="col-lg-12">
                 <div class="action-card">
                     <h2 class="h4 mb-4">Meal Plan Management</h2>
                     <div class="list-group">
